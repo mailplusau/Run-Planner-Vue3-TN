@@ -1,47 +1,111 @@
 <script setup>
-import HelloWorld from './components/HelloWorld.vue'
-import TheWelcome from './components/TheWelcome.vue'
+import { onMounted } from "vue";
+import { useMainStore } from "@/stores/main";
+import GlobalDialog from "@/components/shared/GlobalDialog.vue";
+import DevSideBar from '@/views/dev/components/DevSideBar.vue';
+
+const mainStore = useMainStore();
+
+onMounted(() => {
+    mainStore.init();
+})
+
+function addShortcut() {
+    if (top['addShortcut']) top['addShortcut']();
+    else console.error('addShortcut function not found.')
+}
+
 </script>
 
 <template>
-  <header>
-    <img alt="Vue logo" class="logo" src="./assets/logo.svg" width="125" height="125" />
+    <v-app class="bg-background">
+        <v-main>
+            <v-container fluid>
+                <v-row class="mx-1" justify="space-between" align="center">
+                    <v-col cols="auto">
+                        <h2 class="text-primary" v-html="mainStore.pageTitle" style="font-size: 1.3em;"></h2>
+                    </v-col>
 
-    <div class="wrapper">
-      <HelloWorld msg="You did it!" />
-    </div>
-  </header>
+                    <v-col cols="auto">
+                        <a v-if="true" @click="addShortcut" :style="{cursor: 'pointer'}"
+                           class="subtitle-1 text-primary">Add To Shortcuts <v-icon size="20" color="primary">mdi-open-in-new</v-icon></a>
+                    </v-col>
+                </v-row>
+            </v-container>
 
-  <main>
-    <TheWelcome />
-  </main>
+            <v-divider class="mb-3"></v-divider>
+
+            <MainView />
+        </v-main>
+
+        <DevSideBar />
+    </v-app>
+
+    <GlobalDialog />
 </template>
 
-<style scoped>
-header {
-  line-height: 1.5;
+<style lang="scss">
+.v-list-item {
+    min-height: 40px !important;
+}
+.v-list-item-title {
+    font-size: .85rem !important;
+    font-weight: 500;
+}
+.cell-text-size-11px {
+    font-size: 11px !important;
+}
+.v-data-table__th {
+    font-size: 0.775rem !important;
+}
+.v-text-field__prefix {
+    font-weight: 600;
 }
 
-.logo {
-  display: block;
-  margin: 0 auto 2rem;
+.cell-text-size {
+    font-size: 11px !important;
+}
+.v-input.v-text-field-no-pl input {
+    padding-left: 0 !important;
+}
+.v-input.v-text-field-primary-color-input input {
+    color: #095c7b;
+    font-weight: bold;
 }
 
-@media (min-width: 1024px) {
-  header {
-    display: flex;
-    place-items: center;
-    padding-right: calc(var(--section-gap) / 2);
-  }
+// Scrollbar
+*::-webkit-scrollbar {
+    background: transparent;
+    width: 8px;
+    border: 1px solid #a5b4a5;
+    border-radius: 10px;
+}
+*::-webkit-scrollbar:hover {
+    background: linear-gradient(0deg, #b8c7b7 5%, #cfe0ce 50%, #b9c9b9 95%);
+    /*background: linear-gradient(90deg, black, #3c3c3c);*/
+    width: 8px;
+}
+*::-webkit-scrollbar-thumb {
+    border-radius: 5px;
+    background: radial-gradient(#095c7b 5%, #ffffff00 40%);
+}
+*::-webkit-scrollbar-thumb:hover {
+    background: radial-gradient(white 5%, #095c7b 80%);
+    border: 1px solid #c4c4c4;
+}
+*::-webkit-scrollbar-thumb:active {
+    background-color: #484e51;
+}
+*::-webkit-scrollbar-corner {
+    background-color: #181a1b;
+}
 
-  .logo {
-    margin: 0 2rem 0 0;
-  }
+// AG Grid
+.ag-grid-highlight-00 {
+    background-color: #c2e1c1;
+}
 
-  header .wrapper {
-    display: flex;
-    place-items: flex-start;
-    flex-wrap: wrap;
-  }
+.ag-grid-highlight-01 {
+    background-color: #c1e1e0;
 }
 </style>
