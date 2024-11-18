@@ -1,44 +1,52 @@
 <script setup>
-import { onMounted } from "vue";
+import { onMounted, ref } from "vue";
 import { useMainStore } from "@/stores/main";
 import GlobalDialog from "@/components/shared/GlobalDialog.vue";
-import DevSideBar from '@/views/dev/components/DevSideBar.vue';
+import MainView from "@/views/Main.vue";
+import NavigationTabs from "@/views/shared/NavigationTabs.vue";
+import DevSideBarContents from "@/views/dev/DevSideBarContents.vue";
 
 const mainStore = useMainStore();
+const leftDrawer = ref(false);
+const rightDrawer = ref(false);
 
 onMounted(() => {
     mainStore.init();
 })
 
-function addShortcut() {
-    if (top['addShortcut']) top['addShortcut']();
-    else console.error('addShortcut function not found.')
-}
-
 </script>
 
 <template>
     <v-app class="bg-background">
-        <v-main>
-            <v-container fluid>
-                <v-row class="mx-1" justify="space-between" align="center">
-                    <v-col cols="auto">
-                        <h2 class="text-primary" v-html="mainStore.pageTitle" style="font-size: 1.3em;"></h2>
-                    </v-col>
+        <v-app-bar color="primary" density="compact">
+            <v-btn icon="mdi-menu" variant="plain" @click="leftDrawer = !leftDrawer"></v-btn>
+            <span class="mr-4">Run Planner</span>
 
-                    <v-col cols="auto">
-                        <a v-if="true" @click="addShortcut" :style="{cursor: 'pointer'}"
-                           class="subtitle-1 text-primary">Add To Shortcuts <v-icon size="20" color="primary">mdi-open-in-new</v-icon></a>
-                    </v-col>
-                </v-row>
-            </v-container>
+            <v-divider vertical></v-divider>
 
-            <v-divider class="mb-3"></v-divider>
+            <NavigationTabs />
 
-            <MainView />
+            <v-spacer></v-spacer>
+            <v-btn icon="mdi-menu" variant="plain" @click="rightDrawer = !rightDrawer"></v-btn>
+
+            <template v-slot:extension v-if="mainStore.appBarExtended">
+                <div id="appBarExtension"></div>
+            </template>
+        </v-app-bar>
+
+        <v-navigation-drawer temporary v-model="leftDrawer" scrim>
+            <v-list>
+                <v-list-item title="Drawer left"></v-list-item>
+            </v-list>
+        </v-navigation-drawer>
+
+        <v-navigation-drawer temporary v-model="rightDrawer" location="right">
+            <DevSideBarContents />
+        </v-navigation-drawer>
+
+        <v-main class="fill-height bg-background" style="min-height: 300px;">
+            <MainView/>
         </v-main>
-
-        <DevSideBar />
     </v-app>
 
     <GlobalDialog />

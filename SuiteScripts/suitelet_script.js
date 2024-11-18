@@ -13,7 +13,6 @@ import { getFranchiseesByFilters, getCustomersByFilters } from 'netsuite-shared-
 let htmlTemplateFilename;
 let clientScriptFilename;
 
-const isoStringRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z?$/;
 const defaultTitle = VARS.pageTitle;
 
 let NS_MODULES = {};

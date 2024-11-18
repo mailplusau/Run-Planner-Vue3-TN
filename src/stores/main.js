@@ -6,6 +6,35 @@ const state = {
     pageTitle: VARS.pageTitle,
 
     testMode: false,
+    appBarExtended: false,
+
+    mainTab: 'STOPS',
+    mainTabOptions: {
+        STOPS: {
+            icon: 'mdi-message-processing-outline',
+            text: 'Weekly Stops',
+            value: 'STOPS',
+            component: 'WeeklyStopView',
+        },
+        CUSTOMERS: {
+            icon: 'mdi-email-multiple-outline',
+            text: 'Customers',
+            value: 'CUSTOMERS',
+            component: 'CustomerView',
+        },
+        MAP: {
+            icon: 'mdi-bell-outline',
+            text: 'Service Map',
+            value: 'MAP',
+            component: 'ServiceMapView',
+        },
+        IMPORT: {
+            icon: 'mdi-history',
+            text: 'CSV Handling',
+            value: 'IMPORT',
+            component: 'DataImportView',
+        },
+    },
 
     dev: {
         sidebar: false,
@@ -22,6 +51,10 @@ const actions = {
 
         await useGlobalDialog().close(500, 'Load Complete!')
     },
+    addShortcut() {
+        if (top['addShortcut']) top['addShortcut']();
+        else console.error('addShortcut function not found.')
+    }
 };
 
 async function _readUrlParams(ctx) {
