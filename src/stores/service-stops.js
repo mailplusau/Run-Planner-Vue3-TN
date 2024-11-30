@@ -1,15 +1,23 @@
 import { defineStore } from 'pinia';
 import { getDay, addDays, format, addMilliseconds } from 'date-fns';
+import { useRunPlanStore } from "@/stores/run-plans";
+import { useFranchiseeStore } from "@/stores/franchisees";
+import http from "@/utils/http.mjs";
+import { useAddressStore } from "@/stores/addresses";
+import { _getAddressFieldNameByType } from "@/utils/utils.mjs";
 
 const state = {
     data: [],
 };
 
+// import { serviceStopTestData } from "@/utils/testData";
+// state.data = [...serviceStopTestData];
+
 const getters = {
     weeklyData: state => {
         let today = getDay(new Date());
 
-        let obj = [
+        let obj = [ // 5 working days and 1 for Adhoc
             { day: 1, date: format(addDays(new Date(), 1 - today), "EEEE, do 'of' MMMM, yyyy"), stops: [] },
             { day: 2, date: format(addDays(new Date(), 2 - today), "EEEE, do 'of' MMMM, yyyy"), stops: [] },
             { day: 3, date: format(addDays(new Date(), 3 - today), "EEEE, do 'of' MMMM, yyyy"), stops: [] },
@@ -18,7 +26,7 @@ const getters = {
             { day: 6, date: 'ADHOC', stops: [] },
         ]
 
-        state.data.forEach(stop => {
+        state.data.forEach(stop => { // goes through the data and create a stop for each day of each service
             let daysOfWeek = stop.custrecord_1288_frequency.split(',');
             let stopTimePerDay = stop.custrecord_1288_stop_times.split(',');
 
@@ -86,9 +94,38 @@ const actions = {
     async init() {
         if (!top.location.href.includes('app.netsuite')) return;
 
-
+        await _getServiceStopsBySelectedPlan(this)
     },
 };
+
+async function _getServiceStopsBySelectedPlan(ctx) {
+    if (useRunPlanStore().current.id === null || !useFranchiseeStore().current.id) return;
+
+    let serviceStops = [];
+
+    if (parseInt(useRunPlanStore().current.id) < 0) {
+        let relevantRunPlans = useRunPlanStore().all.filter(item => item ['custrecord_run_franchisee'] === useFranchiseeStore().current.id);
+
+        let result = await Promise.allSettled(relevantRunPlans.filter(item => parseInt(item.internalid) >= 0)
+            .map(item => http.get('getServiceStopsByFilters', {
+                filters: [
+                    ['custrecord_1288_plan', 'is', item['internalid']]
+                ]
+            })))
+
+        serviceStops = result.reduce((acc, val) => {
+            if (val.status ==='fulfilled') acc.push(...val.value);
+            return acc;
+        }, []);
+    } else serviceStops = await http.get('getServiceStopsByFilters', { filters: [['custrecord_1288_plan', 'is', useRunPlanStore().current.id]] });
+
+    serviceStops.forEach(serviceStop => {
+        let addressId = serviceStop[_getAddressFieldNameByType(serviceStop['custrecord_1288_address_type'])]
+        useAddressStore().cacheAnAddress(serviceStop['custrecord_1288_address_type'], addressId, serviceStop['custrecord_1288_customer']);
+    });
+
+    ctx.data = serviceStops;
+}
 
 
 export const useServiceStopStore = defineStore('service-stops', {

@@ -1,6 +1,9 @@
 import { defineStore } from 'pinia';
 import { getWindowContext, VARS } from "@/utils/utils.mjs";
 import { useGlobalDialog } from "@/stores/global-dialog";
+import { useFranchiseeStore } from "@/stores/franchisees";
+import { useRunPlanStore } from "@/stores/run-plans";
+import { useOperatorStore } from "@/stores/operators";
 
 const state = {
     pageTitle: VARS.pageTitle,
@@ -48,6 +51,12 @@ const getters = {
 const actions = {
     async init() {
         if (this.testMode) await _readUrlParams(this);
+
+        await Promise.allSettled([
+            useFranchiseeStore().init(),
+            useRunPlanStore().init(),
+            useOperatorStore().init(),
+        ]);
 
         await useGlobalDialog().close(500, 'Load Complete!')
     },

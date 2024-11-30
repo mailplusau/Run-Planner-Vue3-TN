@@ -31,7 +31,11 @@ const props = defineProps({
     minWidth: {
         type: Number,
         default: 250
-    }
+    },
+    noDataText: {
+        type: String,
+        default: 'No data to show',
+    },
 })
 
 const menuOpen = ref(false);
@@ -43,6 +47,10 @@ const selectedTitle = computed(() => {
 })
 
 function handleSelection() {
+    menuOpen.value = false;
+}
+
+function handleClickOutside(e) {
     menuOpen.value = false;
 }
 
@@ -60,13 +68,14 @@ watch(menuOpen, (val) => {
 </script>
 
 <template>
-    <v-menu :close-on-content-click="false" v-model="menuOpen" location="bottom center">
+    <v-menu :close-on-content-click="false" close-on-back v-model="menuOpen" location="bottom center">
         <template v-slot:activator="{ props: activatorProps }">
             <slot name="activator" :activatorProps="props.disabled ? null : activatorProps" :readonly="props.readonly" :selectedTitle="selectedTitle"></slot>
         </template>
         <v-card :min-width="props.minWidth" color="background">
-            <v-autocomplete density="compact" hide-details variant="outlined" color="primary" :menu="true"
+            <v-autocomplete density="compact" hide-details variant="outlined" color="primary" :menu="true" v-click-outside="handleClickOutside"
                             :items="props.items" :item-title="props.itemTitle" :item-value="props.itemValue"
+                            :no-data-text="props.noDataText"
                             :prefix="props.prefix" @update:model-value="handleSelection"
                             ref="mainInput" v-model="inputValue"></v-autocomplete>
         </v-card>

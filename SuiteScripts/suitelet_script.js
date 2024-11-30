@@ -7,7 +7,14 @@
  */
 
 import { VARS } from "@/utils/utils.mjs";
-import { getFranchiseesByFilters, getCustomersByFilters } from 'netsuite-shared-modules';
+import {
+    address as addressFieldIds,
+    addressSublist as addressSublistFieldIds,
+    getFranchiseesByFilters,
+    getCustomersByFilters,
+    getOperatorsByFilters,
+    getRunPlansByFilters, getServiceStopsByFilters, getLocationsByFilters,
+} from "netsuite-shared-modules";
 
 // These variables will be injected during upload. These can be changed under 'netsuite' of package.json
 let htmlTemplateFilename;
@@ -175,11 +182,54 @@ const getOperations = {
 
         _writeResponseJson(response, {...user, salesRep});
     },
+    'getActiveFranchisees' : function(response) {
+        _writeResponseJson(response, getFranchiseesByFilters(NS_MODULES, [
+            ['isInactive'.toLowerCase(), 'is', false]
+        ]));
+    },
+    'getActiveRunPlans' : function(response) {
+        _writeResponseJson(response, getRunPlansByFilters(NS_MODULES, [
+            ['isInactive'.toLowerCase(), 'is', false]
+        ]));
+    },
+    'getActiveOperators' : function(response) {
+        _writeResponseJson(response, getOperatorsByFilters(NS_MODULES, [
+            ['isInactive'.toLowerCase(), 'is', false]
+        ]));
+    },
+    'getCustomerAddressById' : function (response, {customerId, addressId}) {
+        let {record} = NS_MODULES;
+
+        let customerRecord = record.load({ type: 'customer', id: customerId, isDynamic: true });
+
+        let line = customerRecord['findSublistLineWithValue']({sublistId: 'addressbook', fieldId: 'internalid', value: addressId});
+
+        let entry = {};
+        customerRecord['selectLine']({sublistId: 'addressbook', line});
+
+        for (let fieldId in addressSublistFieldIds)
+            entry[fieldId] = customerRecord['getCurrentSublistValue']({sublistId: 'addressbook', fieldId})
+
+        let addressSubRecord = customerRecord['getCurrentSublistSubrecord']({sublistId: 'addressbook', fieldId: 'addressbookaddress'});
+
+        for (let fieldId in addressFieldIds)
+            entry[fieldId] = addressSubRecord.getValue({ fieldId })
+
+        _writeResponseJson(response, entry);
+    },
+    
+    
     'getCustomersByFilters' : function(response, {filters, additionalColumns, overwriteColumns}) {
         _writeResponseJson(response, getCustomersByFilters(NS_MODULES, filters, additionalColumns, overwriteColumns));
     },
     'getFranchiseesByFilters' : function(response, {filters, additionalColumns, overwriteColumns}) {
         _writeResponseJson(response, getFranchiseesByFilters(NS_MODULES, filters, additionalColumns, overwriteColumns));
+    },
+    'getServiceStopsByFilters' : function(response, {filters, additionalColumns, overwriteColumns}) {
+        _writeResponseJson(response, getServiceStopsByFilters(NS_MODULES, filters, additionalColumns, overwriteColumns));
+    },
+    'getLocationsByFilters' : function(response, {filters, additionalColumns, overwriteColumns}) {
+        _writeResponseJson(response, getLocationsByFilters(NS_MODULES, filters, additionalColumns, overwriteColumns));
     },
 }
 

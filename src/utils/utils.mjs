@@ -176,3 +176,37 @@ export const checkSubset = (parentArray, subsetArray) => {
         return parentArray.includes(el)
     })
 }
+
+export function _getAddressFieldNameByType(addressType) {
+    let arr = ['custrecord_1288_manual_address', 'custrecord_1288_address_book', 'custrecord_1288_postal_location'];
+    return arr[parseInt(addressType) - 1];
+}
+
+export function _parseCustomerAddress(address) {
+    return {
+        formatted: `${address.addr1} ${address.addr2}, ${address.city} ${address.state} ${address.zip}`,
+        name: address['addressee'],
+        addr1: address['addr1'],
+        addr2: address['addr2'],
+        city: address['city'],
+        state: address['state'],
+        zip: address['zip'],
+        lat: address['custrecord_address_lat'],
+        lng: address['custrecord_address_lon'],
+    }
+}
+
+export function _parseNCLocation(address) {
+    let formatted = `${address.name} (${address.custrecord_ap_lodgement_addr1} ${address.custrecord_ap_lodgement_addr2},` +
+        ` ${address.custrecord_ap_lodgement_suburb} ${address.custrecord_ap_lodgement_site_state_text} ${address.custrecord_ap_lodgement_postcode})`;
+    return {
+        formatted, name: address['name'],
+        addr1: address['custrecord_ap_lodgement_addr1'],
+        addr2: address['custrecord_ap_lodgement_addr2'],
+        city: address['custrecord_ap_lodgement_suburb'],
+        state: address['custrecord_ap_lodgement_site_state_text'],
+        zip: address['custrecord_ap_lodgement_postcode'],
+        lat: address['custrecord_ap_lodgement_lat'],
+        lng: address['custrecord_ap_lodgement_long'],
+    }
+}

@@ -15,7 +15,6 @@ const actions = {
     async init() {
         // if (!top.location.href.includes('app.netsuite')) return;
 
-        console.log('init google map');
         const { Map } = await window['google']['maps']['importLibrary']("maps");
 
         googleMap = new Map(document.getElementById('google-map-container'), {
