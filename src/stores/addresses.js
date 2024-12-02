@@ -1,7 +1,5 @@
 import { defineStore } from 'pinia';
 import http from "@/utils/http.mjs";
-import {franchisee as franchiseeFields} from 'netsuite-shared-modules';
-import { useRunPlanStore } from "@/stores/run-plans";
 import { _parseCustomerAddress, _parseNCLocation } from "@/utils/utils.mjs";
 
 const state = {

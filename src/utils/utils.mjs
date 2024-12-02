@@ -12,6 +12,8 @@ export const VARS = {
     pageTitle: 'Run Planner',
 }
 
+export const mapPinColorOptions = ['#960000', '#095c7b', '#007a39']
+
 export const isoStringRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z?$/;
 
 export const rules = {

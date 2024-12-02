@@ -80,6 +80,12 @@ onMounted(() => {
     color: #095c7b;
     font-weight: bold;
 }
+.v-table.v-table--fixed-header>.v-table__wrapper>table>thead>tr>th {
+    background: rgb(var(--v-theme-background)) !important;
+}
+.v-table.v-table--fixed-header>.v-table__wrapper>table>thead>tr {
+    box-shadow: 0 3px 10px #00000038;
+}
 
 // Scrollbar
 *::-webkit-scrollbar {

@@ -38,7 +38,7 @@ const actions = {
 
         if (index >= 0 || parseInt(id) === -1) await useServiceStopStore().init();
 
-        if (id === null) useServiceStopStore().data.splice(0);
+        if (id === null) useServiceStopStore().ofCurrentRunPlan.splice(0);
 
         this.busy = false;
     }

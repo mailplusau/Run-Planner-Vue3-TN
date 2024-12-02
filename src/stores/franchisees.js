@@ -2,6 +2,9 @@ import { defineStore } from 'pinia';
 import http from "@/utils/http.mjs";
 import {franchisee as franchiseeFields} from 'netsuite-shared-modules';
 import { useRunPlanStore } from "@/stores/run-plans";
+import { useCustomerStore } from "@/stores/customers";
+import { useServiceStore } from "@/stores/services";
+import { useServiceStopStore } from "@/stores/service-stops";
 
 const state = {
     all: [],
@@ -35,7 +38,12 @@ const actions = {
             this.current.texts[fieldId] = this.all[index][fieldId + '_text'];
         }
 
-        await useRunPlanStore().changeCurrentRunPlanId(null);
+        await Promise.allSettled([
+            useRunPlanStore().changeCurrentRunPlanId(null),
+            useCustomerStore().getCustomersOfCurrentFranchisee(),
+            useServiceStore().getServicesOfCurrentFranchisee(),
+            useServiceStopStore().getServiceStopsOfCurrentFranchisee(),
+        ])
     }
 };
 

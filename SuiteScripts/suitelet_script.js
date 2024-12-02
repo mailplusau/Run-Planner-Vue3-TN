@@ -13,7 +13,7 @@ import {
     getFranchiseesByFilters,
     getCustomersByFilters,
     getOperatorsByFilters,
-    getRunPlansByFilters, getServiceStopsByFilters, getLocationsByFilters,
+    getRunPlansByFilters, getServiceStopsByFilters, getLocationsByFilters, getServicesByFilters,
 } from "netsuite-shared-modules";
 
 // These variables will be injected during upload. These can be changed under 'netsuite' of package.json
@@ -218,7 +218,9 @@ const getOperations = {
         _writeResponseJson(response, entry);
     },
     
-    
+    'getServicesByFilters' : function(response, {filters, additionalColumns, overwriteColumns}) {
+        _writeResponseJson(response, getServicesByFilters(NS_MODULES, filters, additionalColumns, overwriteColumns));
+    },
     'getCustomersByFilters' : function(response, {filters, additionalColumns, overwriteColumns}) {
         _writeResponseJson(response, getCustomersByFilters(NS_MODULES, filters, additionalColumns, overwriteColumns));
     },

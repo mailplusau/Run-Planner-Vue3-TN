@@ -6,7 +6,7 @@ import { useFranchiseeStore } from "@/stores/franchisees";
 import { useGlobalDialog } from "@/stores/global-dialog";
 import { useRunPlanStore } from "@/stores/run-plans";
 import { useAddressStore } from "@/stores/addresses";
-import { _getAddressFieldNameByType } from "@/utils/utils.mjs";
+import { _getAddressFieldNameByType, mapPinColorOptions } from "@/utils/utils.mjs";
 
 const serviceStopStore = useServiceStopStore();
 const franchiseeStore = useFranchiseeStore();
@@ -24,6 +24,7 @@ const selectedFranchisee = computed({
 });
 
 const vsItemTypes = {
+    NO_DATA: 'no_data',
     DATE: 'date',
     STOP: 'stop',
     DIVIDER: 'divider',
@@ -47,12 +48,6 @@ const runPlans = computed(() => {
         [{internalid: '-1', name: 'All Run Plans'}, ...associatedRunPlans] : associatedRunPlans
 })
 
-function getAddressObject(serviceStop) {
-    let addressId = serviceStop[_getAddressFieldNameByType(serviceStop['custrecord_1288_address_type'])]
-    const cacheId = `${serviceStop['custrecord_1288_address_type']}.${addressId}.${serviceStop['custrecord_1288_customer']}`;
-    return addressStore.cached[cacheId];
-}
-
 const virtualScrollItems = computed(() => {
     const items = [];
 
@@ -72,8 +67,25 @@ const virtualScrollItems = computed(() => {
         }
     }
 
+    if (!items.length) items.push({type: vsItemTypes.NO_DATA});
+
     return items;
 })
+
+function getPinColor(serviceStop) {
+    let stop = Array.isArray(serviceStop) ? serviceStop[0] : serviceStop;
+    return mapPinColorOptions[parseInt(stop.custrecord_1288_address_type) - 1] || '';
+}
+
+function getAddressObject(serviceStop) {
+    let addressId = serviceStop[_getAddressFieldNameByType(serviceStop['custrecord_1288_address_type'])]
+    const cacheId = `${serviceStop['custrecord_1288_address_type']}.${addressId}.${serviceStop['custrecord_1288_customer']}`;
+    return addressStore.cached[cacheId];
+}
+
+function handleStopClicked() {
+
+}
 </script>
 
 <template>
@@ -115,21 +127,28 @@ const virtualScrollItems = computed(() => {
                         <span class="mr-3"></span>
                     </v-toolbar>
 
-                    <v-virtual-scroll :style="{height: 'calc(100vh - 140px)'}" :items="virtualScrollItems">
+                    <v-virtual-scroll :height="virtualScrollItems.length <= 1 ? 'unset' : 'calc(100vh - 140px)'" :items="virtualScrollItems">
                         <template v-slot:default="{ item }">
 
-                            <template v-if="item['type'] === vsItemTypes.DATE">
+                            <template v-if="item['type'] === vsItemTypes.NO_DATA">
+                                <v-list-item class="text-grey text-subtitle-1 font-italic">
+                                    No data to show
+                                </v-list-item>
+                                <v-divider></v-divider>
+                            </template>
+
+                            <template v-else-if="item['type'] === vsItemTypes.DATE">
                                 <v-list-item class="text-primary text-subtitle-1 font-weight-bold">
                                     {{ item.data }}
                                 </v-list-item>
                                 <v-divider></v-divider>
                             </template>
 
-                            <template v-if="item['type'] === vsItemTypes.STOP">
-                                <v-list-item>
+                            <template v-else-if="item['type'] === vsItemTypes.STOP">
+                                <v-list-item @click="handleStopClicked(item.data)">
                                     <template v-slot:prepend>
                                         <span class="mr-5 text-subtitle-2">{{ item.data.stopTime || item.data[0].stopTime}}</span>
-                                        <v-icon size="small">mdi-map-marker</v-icon>
+                                        <v-icon size="small" :color="getPinColor(item.data)">mdi-map-marker</v-icon>
                                     </template>
                                     <v-list-item-title class="text-subtitle-2">
                                         {{ item.data.custrecord_1288_stop_name || item.data[0].custrecord_1288_stop_name }}

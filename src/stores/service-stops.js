@@ -5,13 +5,21 @@ import { useFranchiseeStore } from "@/stores/franchisees";
 import http from "@/utils/http.mjs";
 import { useAddressStore } from "@/stores/addresses";
 import { _getAddressFieldNameByType } from "@/utils/utils.mjs";
+import { serviceStop as serviceStopFields } from "netsuite-shared-modules";
 
 const state = {
-    data: [],
+    ofCurrentRunPlan: [],
+    ofCurrentFranchisee: [],
+
+    current: {
+        id: null,
+        dialogOpen: false,
+        form: {...serviceStopFields},
+    }
 };
 
 // import { serviceStopTestData } from "@/utils/testData";
-// state.data = [...serviceStopTestData];
+// state.ofCurrentRunPlan = [...serviceStopTestData];
 
 const getters = {
     weeklyData: state => {
@@ -26,7 +34,7 @@ const getters = {
             { day: 6, date: 'ADHOC', stops: [] },
         ]
 
-        state.data.forEach(stop => { // goes through the data and create a stop for each day of each service
+        state.ofCurrentRunPlan.forEach(stop => { // goes through the data and create a stop for each day of each service
             let daysOfWeek = stop.custrecord_1288_frequency.split(',');
             let stopTimePerDay = stop.custrecord_1288_stop_times.split(',');
 
@@ -96,6 +104,32 @@ const actions = {
 
         await _getServiceStopsBySelectedPlan(this)
     },
+    async getServiceStopsOfCurrentFranchisee() {
+        if (!useFranchiseeStore().current.id) return this.ofCurrentFranchisee.splice(0);
+
+        this.ofCurrentFranchisee = await http.get('getServiceStopsByFilters', {
+            filters: [
+                ['custrecord_1288_customer.partner', 'is', useFranchiseeStore().current.id],
+                'AND', ['custrecord_1288_customer.entitystatus', 'is', '13'],
+                'AND', ['isinactive', 'is', false],
+            ],
+        });
+    },
+    async selectServiceStop(id) {
+        for (let fieldId in serviceStopFields) this.current.form[fieldId] = serviceStopFields[fieldId];
+
+        const index = this.ofCurrentRunPlan.findIndex(item => parseInt(item['internalid']) === parseInt(id));
+
+        if (index >= 0) {
+            const serviceStop = this.ofCurrentRunPlan[index];
+            for (let fieldId in serviceStopFields) this.current.form[fieldId] = serviceStop[fieldId];
+        }
+
+        if (index >= 0 || id === null) {
+            this.current.id = id;
+            this.current.dialogOpen = true;
+        }
+    }
 };
 
 async function _getServiceStopsBySelectedPlan(ctx) {
@@ -124,7 +158,7 @@ async function _getServiceStopsBySelectedPlan(ctx) {
         useAddressStore().cacheAnAddress(serviceStop['custrecord_1288_address_type'], addressId, serviceStop['custrecord_1288_customer']);
     });
 
-    ctx.data = serviceStops;
+    ctx.ofCurrentRunPlan = serviceStops;
 }
 
 
