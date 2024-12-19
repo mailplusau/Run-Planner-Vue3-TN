@@ -7,7 +7,10 @@ const state = {
 };
 
 const getters = {
-
+    findCache: state => (addressType, addressId, customerId) => {
+        const cacheId = `${addressType}.${addressId}${parseInt(addressType) === 2 ? '.' + customerId : ''}`;
+        return state.cached[cacheId] || null;
+    }
 };
 
 const actions = {
@@ -16,7 +19,7 @@ const actions = {
 
     },
     async cacheAnAddress(addressType, addressId, customerId) {
-        const cacheId = `${addressType}.${addressId}.${customerId}`;
+        const cacheId = `${addressType}.${addressId}${parseInt(addressType) === 2 ? '.' + customerId : ''}`;
 
         if (!this.cached[cacheId]) {
             this.cached[cacheId] = {formatted: 'Retrieving...', name: '', addr1: '', addr2: '', city: '', state: '', zip: '', lat: '', lng: ''};
@@ -32,6 +35,22 @@ const actions = {
                 this.cached[cacheId] = addresses[0] ? _parseNCLocation(addresses[0])
                     : {formatted: `Unknown (${addressId})`, name: '', addr1: '', addr2: '', city: '', state: '', zip: '', lat: '', lng: ''};
             }
+        }
+    },
+    async cacheCustomersAddresses(customerId, addresses = []) {
+        addresses = !addresses || !Array.isArray(addresses) || !addresses.length ? await http.get('getCustomerAddresses', {customerId}) : addresses;
+
+        for (let address of addresses) {
+            const cacheId = `2.${address['internalid']}.${customerId}`;
+
+            if (!this.cached[cacheId]) this.cached[cacheId] = _parseCustomerAddress(address);
+        }
+    },
+    async cacheLocations(locations = [], parseLocation = false) {
+        for (let location of locations) {
+            const cacheId = `3.${location['internalid'] || location['id']}`;
+
+            if (!this.cached[cacheId]) this.cached[cacheId] = parseLocation ? _parseNCLocation(location) : JSON.parse(JSON.stringify(location));
         }
     }
 };

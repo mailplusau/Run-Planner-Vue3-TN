@@ -10,10 +10,8 @@ import { VARS } from "@/utils/utils.mjs";
 import {
     address as addressFieldIds,
     addressSublist as addressSublistFieldIds,
-    getFranchiseesByFilters,
-    getCustomersByFilters,
-    getOperatorsByFilters,
-    getRunPlansByFilters, getServiceStopsByFilters, getLocationsByFilters, getServicesByFilters,
+    getFranchiseesByFilters, getCustomersByFilters, getOperatorsByFilters, getServicesByFilters,
+    getRunPlansByFilters, getServiceStopsByFilters, getLocationsByFilters, getCustomersAddresses, getCustomListData,
 } from "netsuite-shared-modules";
 
 // These variables will be injected during upload. These can be changed under 'netsuite' of package.json
@@ -182,6 +180,10 @@ const getOperations = {
 
         _writeResponseJson(response, {...user, salesRep});
     },
+    'getCustomListData' : function(response, {id, type, valueColumnName, textColumnName}) {
+        _writeResponseJson(response, getCustomListData(NS_MODULES, id, type, valueColumnName, textColumnName))
+    },
+
     'getActiveFranchisees' : function(response) {
         _writeResponseJson(response, getFranchiseesByFilters(NS_MODULES, [
             ['isInactive'.toLowerCase(), 'is', false]
@@ -196,6 +198,10 @@ const getOperations = {
         _writeResponseJson(response, getOperatorsByFilters(NS_MODULES, [
             ['isInactive'.toLowerCase(), 'is', false]
         ]));
+    },
+
+    'getCustomerAddresses' : function(response, {customerId}) {
+        _writeResponseJson(response, getCustomersAddresses(NS_MODULES, customerId))
     },
     'getCustomerAddressById' : function (response, {customerId, addressId}) {
         let {record} = NS_MODULES;

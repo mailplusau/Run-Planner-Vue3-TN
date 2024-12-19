@@ -3,23 +3,21 @@ import { getDay, addDays, format, addMilliseconds } from 'date-fns';
 import { useRunPlanStore } from "@/stores/run-plans";
 import { useFranchiseeStore } from "@/stores/franchisees";
 import http from "@/utils/http.mjs";
+import { serviceStop as serviceStopFields } from "netsuite-shared-modules";
 import { useAddressStore } from "@/stores/addresses";
 import { _getAddressFieldNameByType } from "@/utils/utils.mjs";
-import { serviceStop as serviceStopFields } from "netsuite-shared-modules";
 
 const state = {
-    ofCurrentRunPlan: [],
     ofCurrentFranchisee: [],
 
     current: {
+        customerId: null,
+
         id: null,
-        dialogOpen: false,
+        crudDialogOpen: false,
         form: {...serviceStopFields},
     }
 };
-
-// import { serviceStopTestData } from "@/utils/testData";
-// state.ofCurrentRunPlan = [...serviceStopTestData];
 
 const getters = {
     weeklyData: state => {
@@ -34,7 +32,13 @@ const getters = {
             { day: 6, date: 'ADHOC', stops: [] },
         ]
 
-        state.ofCurrentRunPlan.forEach(stop => { // goes through the data and create a stop for each day of each service
+        if (useRunPlanStore().current.id === null) return obj;
+
+        const serviceStopsOfCurrentRunPlan = parseInt(useRunPlanStore().current.id) === -1
+            ? state.ofCurrentFranchisee.filter(item => useRunPlanStore().ofCurrentFranchisee.map(i => i['internalid']).includes(item['custrecord_1288_plan']))
+            : state.ofCurrentFranchisee.filter(item => item['custrecord_1288_plan'] === useRunPlanStore().current.id);
+
+        serviceStopsOfCurrentRunPlan.forEach(stop => { // goes through the data and create a stop for each day of each service
             let daysOfWeek = stop.custrecord_1288_frequency.split(',');
             let stopTimePerDay = stop.custrecord_1288_stop_times.split(',');
 
@@ -102,64 +106,35 @@ const actions = {
     async init() {
         if (!top.location.href.includes('app.netsuite')) return;
 
-        await _getServiceStopsBySelectedPlan(this)
+        console.log('service-stops init')
     },
     async getServiceStopsOfCurrentFranchisee() {
         if (!useFranchiseeStore().current.id) return this.ofCurrentFranchisee.splice(0);
 
-        this.ofCurrentFranchisee = await http.get('getServiceStopsByFilters', {
+        const serviceStops = await http.get('getServiceStopsByFilters', {
             filters: [
                 ['custrecord_1288_customer.partner', 'is', useFranchiseeStore().current.id],
                 'AND', ['custrecord_1288_customer.entitystatus', 'is', '13'],
                 'AND', ['isinactive', 'is', false],
             ],
         });
+
+        serviceStops.forEach(serviceStop => {
+            let addressId = serviceStop[_getAddressFieldNameByType(serviceStop['custrecord_1288_address_type'])]
+            useAddressStore().cacheAnAddress(serviceStop['custrecord_1288_address_type'], addressId, serviceStop['custrecord_1288_customer']);
+        });
+
+        this.ofCurrentFranchisee = serviceStops;
     },
-    async selectServiceStop(id) {
+
+    resetForm() {
         for (let fieldId in serviceStopFields) this.current.form[fieldId] = serviceStopFields[fieldId];
 
-        const index = this.ofCurrentRunPlan.findIndex(item => parseInt(item['internalid']) === parseInt(id));
+        this.current.form.custrecord_1288_customer = this.current.customerId;
+        this.current.form.custrecord_1288_franchisee = useFranchiseeStore().current.id;
 
-        if (index >= 0) {
-            const serviceStop = this.ofCurrentRunPlan[index];
-            for (let fieldId in serviceStopFields) this.current.form[fieldId] = serviceStop[fieldId];
-        }
-
-        if (index >= 0 || id === null) {
-            this.current.id = id;
-            this.current.dialogOpen = true;
-        }
     }
 };
-
-async function _getServiceStopsBySelectedPlan(ctx) {
-    if (useRunPlanStore().current.id === null || !useFranchiseeStore().current.id) return;
-
-    let serviceStops = [];
-
-    if (parseInt(useRunPlanStore().current.id) < 0) {
-        let relevantRunPlans = useRunPlanStore().all.filter(item => item ['custrecord_run_franchisee'] === useFranchiseeStore().current.id);
-
-        let result = await Promise.allSettled(relevantRunPlans.filter(item => parseInt(item.internalid) >= 0)
-            .map(item => http.get('getServiceStopsByFilters', {
-                filters: [
-                    ['custrecord_1288_plan', 'is', item['internalid']]
-                ]
-            })))
-
-        serviceStops = result.reduce((acc, val) => {
-            if (val.status ==='fulfilled') acc.push(...val.value);
-            return acc;
-        }, []);
-    } else serviceStops = await http.get('getServiceStopsByFilters', { filters: [['custrecord_1288_plan', 'is', useRunPlanStore().current.id]] });
-
-    serviceStops.forEach(serviceStop => {
-        let addressId = serviceStop[_getAddressFieldNameByType(serviceStop['custrecord_1288_address_type'])]
-        useAddressStore().cacheAnAddress(serviceStop['custrecord_1288_address_type'], addressId, serviceStop['custrecord_1288_customer']);
-    });
-
-    ctx.ofCurrentRunPlan = serviceStops;
-}
 
 
 export const useServiceStopStore = defineStore('service-stops', {

@@ -79,8 +79,7 @@ function getPinColor(serviceStop) {
 
 function getAddressObject(serviceStop) {
     let addressId = serviceStop[_getAddressFieldNameByType(serviceStop['custrecord_1288_address_type'])]
-    const cacheId = `${serviceStop['custrecord_1288_address_type']}.${addressId}.${serviceStop['custrecord_1288_customer']}`;
-    return addressStore.cached[cacheId];
+    return addressStore.findCache(serviceStop['custrecord_1288_address_type'], addressId, serviceStop['custrecord_1288_customer']);
 }
 
 function handleStopClicked() {

@@ -73,7 +73,7 @@ watch(menuOpen, (val) => {
             <slot name="activator" :activatorProps="props.disabled ? null : activatorProps" :readonly="props.readonly" :selectedTitle="selectedTitle"></slot>
         </template>
         <v-card :min-width="props.minWidth" color="background">
-            <v-autocomplete density="compact" hide-details variant="outlined" color="primary" :menu="true" v-click-outside="handleClickOutside"
+            <v-autocomplete density="compact" hide-details variant="outlined" color="primary" :menu="true" v-click-outside="handleClickOutside" auto-select-first
                             :items="props.items" :item-title="props.itemTitle" :item-value="props.itemValue"
                             :no-data-text="props.noDataText"
                             :prefix="props.prefix" @update:model-value="handleSelection"

@@ -186,6 +186,7 @@ export function _getAddressFieldNameByType(addressType) {
 
 export function _parseCustomerAddress(address) {
     return {
+        id: address['internalid'],
         formatted: `${address.addr1} ${address.addr2}, ${address.city} ${address.state} ${address.zip}`,
         name: address['addressee'],
         addr1: address['addr1'],
@@ -199,10 +200,12 @@ export function _parseCustomerAddress(address) {
 }
 
 export function _parseNCLocation(address) {
-    let formatted = `${address.name} (${address.custrecord_ap_lodgement_addr1} ${address.custrecord_ap_lodgement_addr2},` +
-        ` ${address.custrecord_ap_lodgement_suburb} ${address.custrecord_ap_lodgement_site_state_text} ${address.custrecord_ap_lodgement_postcode})`;
+    const fullAddress = `${address.custrecord_ap_lodgement_addr1} ${address.custrecord_ap_lodgement_addr2},` +
+        ` ${address.custrecord_ap_lodgement_suburb} ${address.custrecord_ap_lodgement_site_state_text} ${address.custrecord_ap_lodgement_postcode}`;
+    let formatted = `${address.name} (${fullAddress})`;
     return {
-        formatted, name: address['name'],
+        id: address['internalid'],
+        formatted, fullAddress, name: address['name'],
         addr1: address['custrecord_ap_lodgement_addr1'],
         addr2: address['custrecord_ap_lodgement_addr2'],
         city: address['custrecord_ap_lodgement_suburb'],

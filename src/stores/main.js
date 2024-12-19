@@ -4,6 +4,7 @@ import { useGlobalDialog } from "@/stores/global-dialog";
 import { useFranchiseeStore } from "@/stores/franchisees";
 import { useRunPlanStore } from "@/stores/run-plans";
 import { useOperatorStore } from "@/stores/operators";
+import { useDataStore } from "@/stores/data";
 
 const state = {
     pageTitle: VARS.pageTitle,
@@ -56,6 +57,7 @@ const actions = {
             useFranchiseeStore().init(),
             useRunPlanStore().init(),
             useOperatorStore().init(),
+            useDataStore().init(),
         ]);
 
         await useGlobalDialog().close(500, 'Load Complete!')

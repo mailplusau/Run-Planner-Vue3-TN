@@ -3,6 +3,8 @@ import WeeklyStopView from '@/views/weekly-stops/Main.vue';
 import CustomerView from '@/views/customers/Main.vue';
 import ServiceMapView from '@/views/service-map/Main.vue';
 import DataImportView from '@/views/data-import/Main.vue';
+import ServiceStopManagementDialog from '@/views/service-stops/management-dialog/Main.vue';
+import ServiceStopCrudDialog from '@/views/service-stops/crud-dialog/Main.vue';
 
 import { useMainStore } from "@/stores/main";
 
@@ -21,6 +23,9 @@ const components = {
         <component v-if="mainStore.mainTab === mainStore.mainTabOptions[tabKey].value"
                    :is="components[mainStore.mainTabOptions[tabKey].component]"></component>
     </v-fade-transition>
+
+    <ServiceStopManagementDialog />
+    <ServiceStopCrudDialog />
 </template>
 
 <style scoped>

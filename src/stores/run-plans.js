@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import http from "@/utils/http.mjs";
 import { runPlan as runPlanFields } from "../../../netsuite-shared-modules/index.mjs";
-import { useServiceStopStore } from "@/stores/service-stops";
+import { useFranchiseeStore } from "@/stores/franchisees";
 
 const state = {
     all: [],
@@ -15,7 +15,7 @@ const state = {
 };
 
 const getters = {
-
+    ofCurrentFranchisee : state => useFranchiseeStore().current.id ? state.all.filter(item => item['custrecord_run_franchisee'] === useFranchiseeStore().current.id) : [],
 };
 
 const actions = {
@@ -35,10 +35,6 @@ const actions = {
                 this.current.details[fieldId] = this.all[index][fieldId];
                 this.current.texts[fieldId] = this.all[index][fieldId + '_text'];
             }
-
-        if (index >= 0 || parseInt(id) === -1) await useServiceStopStore().init();
-
-        if (id === null) useServiceStopStore().ofCurrentRunPlan.splice(0);
 
         this.busy = false;
     }

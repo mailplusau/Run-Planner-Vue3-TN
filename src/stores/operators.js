@@ -1,12 +1,13 @@
 import { defineStore } from 'pinia';
 import http from "@/utils/http.mjs";
+import { useFranchiseeStore } from "@/stores/franchisees";
 
 const state = {
     all: [],
 };
 
 const getters = {
-
+    ofCurrentFranchisee : state => useFranchiseeStore().current.id ? state.all.filter(item => item['custrecord_operator_franchisee'] === useFranchiseeStore().current.id) : [],
 };
 
 const actions = {

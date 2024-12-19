@@ -87,6 +87,14 @@ onMounted(() => {
     box-shadow: 0 3px 10px #00000038;
 }
 
+.service-stop-timeline.v-timeline--vertical.v-timeline--justify-auto {
+    grid-template-columns: auto min-content 1fr !important;
+}
+
+.service-stop-timeline .v-timeline-item__body {
+    width: 100% !important;
+}
+
 // Scrollbar
 *::-webkit-scrollbar {
     background: transparent;
