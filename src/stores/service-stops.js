@@ -54,7 +54,6 @@ const getters = {
                         eventEnd: addMilliseconds(eventTime, parseInt(stopDuration)).getTime(),
                         stopTime, stopDuration,
                         address: stop.custrecord_1288_address_type,
-                        // address: rootGetters['addresses/getAddressObject'](parseInt(stop.custrecord_1288_address_type), stop),
                         addressType: addressTypes[parseInt(stop.custrecord_1288_address_type) - 1]
                     });
                 }

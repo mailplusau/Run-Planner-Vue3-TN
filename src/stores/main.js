@@ -11,6 +11,7 @@ const state = {
 
     testMode: false,
     appBarExtended: false,
+    rightDrawerOpen: false,
 
     mainTab: 'STOPS',
     mainTabOptions: {

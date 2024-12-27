@@ -1,4 +1,3 @@
-
 export const mapStyleJson = [
     {
         "featureType": "poi.attraction",
@@ -74,3 +73,5 @@ export const mapStyleJson = [
         ]
     }
 ];
+
+export const mapPinColorOptions = ['#960000', '#095c7b', '#007a39']

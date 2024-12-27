@@ -223,6 +223,12 @@ const getOperations = {
 
         _writeResponseJson(response, entry);
     },
+    'getTerritoryPolygons' : function (response) {
+        let file = NS_MODULES.file.load({id: 3772482});
+        let contents = file['getContents']()
+
+        _writeResponseJson(response, JSON.parse(contents.replaceAll('\\n', '').replaceAll(' ', '')));
+    },
     
     'getServicesByFilters' : function(response, {filters, additionalColumns, overwriteColumns}) {
         _writeResponseJson(response, getServicesByFilters(NS_MODULES, filters, additionalColumns, overwriteColumns));

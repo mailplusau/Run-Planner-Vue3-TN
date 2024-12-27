@@ -27,24 +27,24 @@ onMounted(() => {
             <NavigationTabs />
 
             <v-spacer></v-spacer>
-            <v-btn icon="mdi-menu" variant="plain" @click="rightDrawer = !rightDrawer"></v-btn>
+<!--            <v-btn icon="mdi-menu" variant="plain" @click="mainStore.rightDrawerOpen = !mainStore.rightDrawerOpen"></v-btn>-->
 
             <template v-slot:extension v-if="mainStore.appBarExtended">
                 <div id="appBarExtension"></div>
             </template>
         </v-app-bar>
 
-        <v-navigation-drawer temporary v-model="leftDrawer" scrim>
+        <v-navigation-drawer v-model="leftDrawer" scrim>
             <v-list>
                 <v-list-item title="Drawer left"></v-list-item>
             </v-list>
         </v-navigation-drawer>
 
-        <v-navigation-drawer temporary v-model="rightDrawer" location="right">
-            <DevSideBarContents />
+        <v-navigation-drawer v-model="mainStore.rightDrawerOpen" location="right" color="background">
+            <div id="rightDrawerContents"></div>
         </v-navigation-drawer>
 
-        <v-main class="fill-height bg-background" style="min-height: 300px;">
+        <v-main class="fill-height bg-background">
             <MainView/>
         </v-main>
     </v-app>

@@ -6,7 +6,8 @@ import { useFranchiseeStore } from "@/stores/franchisees";
 import { useGlobalDialog } from "@/stores/global-dialog";
 import { useRunPlanStore } from "@/stores/run-plans";
 import { useAddressStore } from "@/stores/addresses";
-import { _getAddressFieldNameByType, mapPinColorOptions } from "@/utils/utils.mjs";
+import { _getAddressFieldNameByType } from "@/utils/utils.mjs";
+import { mapPinColorOptions } from "@/utils/defaults.mjs";
 
 const serviceStopStore = useServiceStopStore();
 const franchiseeStore = useFranchiseeStore();

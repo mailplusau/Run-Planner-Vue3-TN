@@ -1,6 +1,11 @@
 import { defineStore } from 'pinia';
 import http from "@/utils/http.mjs";
-import { _parseCustomerAddress, _parseNCLocation } from "@/utils/utils.mjs";
+import {
+    _getAddressFieldNameByType,
+    _parseCustomerAddress,
+    _parseManualAddress,
+    _parseNCLocation,
+} from "@/utils/utils.mjs";
 
 const state = {
     cached: {},
@@ -8,6 +13,16 @@ const state = {
 
 const getters = {
     findCache: state => (addressType, addressId, customerId) => {
+        const cacheId = `${addressType}.${addressId}${parseInt(addressType) === 2 ? '.' + customerId : ''}`;
+        return state.cached[cacheId] || null;
+    },
+    findCacheByStopObj : state => stopObj => {
+        const addressType = stopObj['custrecord_1288_address_type'];
+
+        if (parseInt(addressType) === 1) return _parseManualAddress(stopObj.custrecord_1288_manual_address);
+
+        const addressId = stopObj[_getAddressFieldNameByType(stopObj['custrecord_1288_address_type'])];
+        const customerId = stopObj['custrecord_1288_customer'];
         const cacheId = `${addressType}.${addressId}${parseInt(addressType) === 2 ? '.' + customerId : ''}`;
         return state.cached[cacheId] || null;
     }

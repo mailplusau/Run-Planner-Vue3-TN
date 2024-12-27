@@ -12,8 +12,6 @@ export const VARS = {
     pageTitle: 'Run Planner',
 }
 
-export const mapPinColorOptions = ['#960000', '#095c7b', '#007a39']
-
 export const isoStringRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z?$/;
 
 export const rules = {
@@ -182,6 +180,11 @@ export const checkSubset = (parentArray, subsetArray) => {
 export function _getAddressFieldNameByType(addressType) {
     let arr = ['custrecord_1288_manual_address', 'custrecord_1288_address_book', 'custrecord_1288_postal_location'];
     return arr[parseInt(addressType) - 1];
+}
+
+export function _parseManualAddress(jsonString) {
+    let address = JSON.parse(jsonString);
+    return {...address, formatted: `${address.addr1} ${address.addr2}, ${address.city} ${address.state} ${address.zip}`}
 }
 
 export function _parseCustomerAddress(address) {
