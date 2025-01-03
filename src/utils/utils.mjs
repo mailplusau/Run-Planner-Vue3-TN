@@ -177,6 +177,29 @@ export const checkSubset = (parentArray, subsetArray) => {
     })
 }
 
+export function isServiceStopObjectValid(ssObj) {
+    let fieldsToCheck = [
+        'custrecord_1288_customer',
+        'custrecord_1288_service',
+        'custrecord_1288_plan',
+        'custrecord_1288_franchisee',
+        'custrecord_1288_operator',
+        'custrecord_1288_stop_name',
+        // 'custrecord_1288_frequency',
+        // 'custrecord_1288_stop_times',
+        // 'custrecord_1288_notes',
+        'custrecord_1288_address_type', // Manual (1), Book (2), Location (3)
+        // 'custrecord_1288_address_book',
+        // 'custrecord_1288_postal_location',
+        // 'custrecord_1288_manual_address',
+    ]
+
+    return fieldsToCheck.reduce((accumulator, fieldId) => !!ssObj[fieldId] && accumulator, true)
+        && !!ssObj.custrecord_1288_address_type
+        && (!!ssObj.custrecord_1288_address_book || !!ssObj.custrecord_1288_postal_location || !!ssObj.custrecord_1288_manual_address)
+        && ssObj.custrecord_1288_frequency.split(',').reduce((accumulator, item) => parseInt(item) + accumulator, 0) > 0;
+}
+
 export function _getAddressFieldNameByType(addressType) {
     let arr = ['custrecord_1288_manual_address', 'custrecord_1288_address_book', 'custrecord_1288_postal_location'];
     return arr[parseInt(addressType) - 1];

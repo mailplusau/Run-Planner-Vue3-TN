@@ -4,11 +4,9 @@ import { useMainStore } from "@/stores/main";
 import GlobalDialog from "@/components/shared/GlobalDialog.vue";
 import MainView from "@/views/Main.vue";
 import NavigationTabs from "@/views/shared/NavigationTabs.vue";
-import DevSideBarContents from "@/views/dev/DevSideBarContents.vue";
 
 const mainStore = useMainStore();
 const leftDrawer = ref(false);
-const rightDrawer = ref(false);
 
 onMounted(() => {
     mainStore.init();
@@ -29,9 +27,7 @@ onMounted(() => {
             <v-spacer></v-spacer>
 <!--            <v-btn icon="mdi-menu" variant="plain" @click="mainStore.rightDrawerOpen = !mainStore.rightDrawerOpen"></v-btn>-->
 
-            <template v-slot:extension v-if="mainStore.appBarExtended">
-                <div id="appBarExtension"></div>
-            </template>
+            <template v-slot:extension v-if="mainStore.appBarExtended"></template>
         </v-app-bar>
 
         <v-navigation-drawer v-model="leftDrawer" scrim>
