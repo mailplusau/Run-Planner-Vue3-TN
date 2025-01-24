@@ -1,20 +1,17 @@
 <script setup>
 import { rules } from "@/utils/utils.mjs";
-import { useCustomerStore } from "@/stores/customers";
 import { useServiceStore } from "@/stores/services";
-import { useAddressStore } from "@/stores/addresses";
 import { useServiceStopStore } from "@/stores/service-stops";
+import TimePicker from "@/components/shared/TimePicker.vue";
 import AddressPicker from "@/views/service-stops/crud-dialog/components/AddressPicker.vue";
 import { useRunPlanStore } from "@/stores/run-plans";
 import { useOperatorStore } from "@/stores/operators";
-import { ref } from "vue";
-
-// TODO: [WIP] Time Picker
+import { computed, onMounted, ref } from "vue";
+import { useGlobalDialog } from "@/stores/global-dialog";
 
 const { validate } = rules;
-const customerStore = useCustomerStore();
 const serviceStore = useServiceStore();
-const addressStore = useAddressStore();
+const globalDialog = useGlobalDialog();
 const ssStore = useServiceStopStore();
 const runPlanStore = useRunPlanStore();
 const operatorStore = useOperatorStore();
@@ -22,9 +19,11 @@ const operatorStore = useOperatorStore();
 const serviceTimeDifference = 0; // 0: same every day | 1: different each day
 
 const formDisabled = ref(false);
-const formBusy = ref(false);
 const formValid = ref(true);
 const mainForm = ref(null);
+const currentService = computed(() => {
+    return serviceStore.ofCurrentFranchisee.filter(service => service['internalid'] === ssStore.current.form.custrecord_1288_service)?.[0] || {};
+})
 
 function getFreq(index) { // arcane voodoo black magic stuffs
     if (index >= 0 && index <= 5)
@@ -66,6 +65,13 @@ async function saveForm() {
     if (!res.valid) return console.log('Fix the errors');
 
     console.log('form valid!')
+    globalDialog.displayProgress('', 'Saving service stop data. Please wait...');
+    await ssStore.saveServiceStopForm();
+    await ssStore.getServiceStopsOfCurrentFranchisee();
+    ssStore.resetForm();
+    ssStore.current.id = null;
+    ssStore.current.crudDialogOpen = false;
+    await globalDialog.close(500, 'Save complete!');
 }
 
 
@@ -75,8 +81,11 @@ async function saveForm() {
     <v-dialog v-model="ssStore.current.crudDialogOpen" width="950" persistent>
         <v-card color="background">
             <v-toolbar color="primary">
-                <span class="ml-4 font-weight-bold text-secondary">
-                    Add New Service Stop
+                <span class="ml-4">
+                    <span v-if="ssStore.current.id">Edit <b class="text-secondary">Service Stop #{{ssStore.current.id}}</b> of </span>
+                    <span v-else>Add new service stop for </span>
+                    service <b class="text-secondary">{{currentService['custrecord_service_text']}}</b>
+                    <br><span class="text-caption">Customer: <i class="text-secondary">{{currentService['custrecord_service_customer_text']}}</i></span>
                 </span>
 
                 <v-spacer></v-spacer>
@@ -89,7 +98,7 @@ async function saveForm() {
                     <v-form ref="mainForm" v-model="formValid" lazy-validation :disabled="formDisabled">
                         <v-row justify="center">
                             <v-col cols="12" class="pb-0">
-                                <AddressPicker v-model:service-stop-object="ssStore.current.form">
+                                <AddressPicker v-model:service-stop-object="ssStore.current.form" @address-selected="ssStore.triggerStopNamePrefill()">
                                     <template v-slot:activator="{ activatorProps, displayAddress }">
                                         <v-text-field label="Address" variant="outlined" density="compact" color="primary" :model-value="displayAddress"
                                                       prepend-icon="mdi-map-marker-outline" v-bind="activatorProps" readonly
@@ -109,14 +118,20 @@ async function saveForm() {
                                 <v-text-field label="Stop Name" variant="outlined" density="compact" color="primary" class="mb-4"
                                               prepend-icon="mdi-tag-heart-outline" v-model="ssStore.current.form.custrecord_1288_stop_name"
                                               :rules="[v => validate(v, 'required')]"></v-text-field>
-                                <v-text-field prefix="Service Time:" variant="outlined" density="compact" color="primary"
-                                              prepend-icon="mdi-timer-check-outline" persistent-placeholder
-                                              :model-value="getServiceTime(0)" @update:model-value="v => setServiceTime(0, v)"
-                                              :rules="[v => validate(v, 'required')]" readonly></v-text-field>
+
+                                <TimePicker :model-value="getServiceTime(0)" @update:model-value="v => setServiceTime(0, v)">
+                                    <template v-slot:activator="{ activatorProps, displayValue }">
+                                        <v-text-field prefix="Service Time:" variant="outlined" density="compact" color="primary"
+                                                      prepend-icon="mdi-timer-check-outline" persistent-placeholder
+                                                      v-bind="activatorProps" :model-value="displayValue" readonly
+                                                      :rules="[v => validate(v, 'required')]"></v-text-field>
+                                    </template>
+                                </TimePicker>
                             </v-col>
 
                             <v-col cols="4">
-                                <v-textarea label="Notes" variant="outlined" density="compact" color="primary" rows="11" no-resize></v-textarea>
+                                <v-textarea v-model="ssStore.current.form.custrecord_1288_notes"
+                                            label="Notes" variant="outlined" density="compact" color="primary" rows="11" no-resize></v-textarea>
                             </v-col>
                         </v-row>
 
@@ -170,8 +185,6 @@ async function saveForm() {
                                 <v-btn color="green" block size="large" @click="saveForm">Save & Close</v-btn>
                             </v-col>
                         </v-row>
-
-                        <v-row>{{ssStore.current.form}}</v-row>
                     </v-form>
                 </v-container>
             </div>

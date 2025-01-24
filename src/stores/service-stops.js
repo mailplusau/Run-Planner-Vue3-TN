@@ -6,6 +6,8 @@ import http from "@/utils/http.mjs";
 import { serviceStop as serviceStopFields } from "netsuite-shared-modules";
 import { useAddressStore } from "@/stores/addresses";
 import { _getAddressFieldNameByType } from "@/utils/utils.mjs";
+import { useGlobalDialog } from "@/stores/global-dialog";
+import { useCustomerStore } from "@/stores/customers";
 
 const state = {
     ofCurrentFranchisee: [],
@@ -107,6 +109,9 @@ const actions = {
 
         console.log('service-stops init')
     },
+    triggerStopNamePrefill() {
+        this.current.form.custrecord_1288_stop_name = _getPrefilledStopName(this.current.form, this.current.customerId);
+    },
     async getServiceStopsOfCurrentFranchisee() {
         if (!useFranchiseeStore().current.id) return this.ofCurrentFranchisee.splice(0);
 
@@ -125,6 +130,47 @@ const actions = {
 
         this.ofCurrentFranchisee = serviceStops;
     },
+    async saveServiceStopForm() {
+        let serviceStopData = JSON.parse(JSON.stringify(this.current.form));
+
+        // Data preparation
+        serviceStopData.custrecord_1288_relief_start = new Date(serviceStopData.custrecord_1288_relief_start + ' 00:00:00');
+        serviceStopData.custrecord_1288_relief_end = new Date(serviceStopData.custrecord_1288_relief_end + ' 23:59:59');
+
+        await http.post('saveOrCreateServiceStop', {
+            serviceStopId: this.current.id,
+            serviceStopData
+        });
+    },
+    async saveOrCreateServiceStop(serviceStopId, serviceStopData) {
+        await http.post('saveOrCreateServiceStop', {serviceStopId, serviceStopData});
+    },
+    async deleteServiceStop(serviceStop) {
+        const msg = `<p class="mb-5 text-center"><i class="mdi-close-octagon mdi v-icon notranslate v-theme--light text-red" style="font-size: 50px; height: 50px; width: 50px;"></i></p>` +
+            `<p>You are about to delete a service stop with the following information:</p>` +
+            `<ul class="text-subtitle-1" style="padding-left: 24px">` +
+            `<li>Stop Name: <b class="text-primary">${serviceStop.custrecord_1288_stop_name}</b></li>` +
+            `<li>Service Name: <b class="text-primary">${serviceStop.custrecord_1288_service_text}</b></li>` +
+            `<li>Customer Name: <b class="text-primary">${serviceStop.custrecord_1288_customer_text}</b></li>` +
+            `</ul><p class="my-2">Would you like to delete this service stop?</p>` +
+            `<p class="mt-2 mb-0"><b class="text-red">Warning: This action is irreversible!</b></p>`;
+
+        const confirmed = await new Promise((resolve) => {
+            useGlobalDialog().displayInfo('', msg, false, [
+                'spacer',
+                {color: 'unset', variant: 'elevated', text: 'Cancel', action:() => { resolve(0); useGlobalDialog().close(); }, class: 'text-none'},
+                {color: 'red', variant: 'elevated', text: 'DELETE SERVICE STOP', action:() => { resolve(1); useGlobalDialog().close(); }, class: 'text-none'},
+                'spacer',
+            ])
+        });
+
+        if (!confirmed) return;
+
+        useGlobalDialog().displayProgress('', 'Deleting service stop. Please wait...');
+        const res = await http.post('deleteServiceStop', {serviceStopId: serviceStop['internalid']});
+        await this.getServiceStopsOfCurrentFranchisee();
+        useGlobalDialog().displayInfo('Complete', res);
+    },
 
     resetForm() {
         for (let fieldId in serviceStopFields) this.current.form[fieldId] = serviceStopFields[fieldId];
@@ -134,6 +180,26 @@ const actions = {
 
     }
 };
+
+function _getPrefilledStopName(stopObject, customerId) {
+    const form = stopObject;
+    console.log('stopObject', stopObject);
+    const customer = useCustomerStore().ofCurrentFranchisee.filter(i => i['internalid'] === customerId)?.[0] || {};
+
+    if (parseInt(form.custrecord_1288_address_type) === 2) {
+        console.log('customer', customer);
+        return customer.companyname;
+    }
+
+    if (parseInt(form.custrecord_1288_address_type) === 3) {
+        const locationObject = useAddressStore().findCache('3', form.custrecord_1288_postal_location, customerId);
+
+        console.log('locationObject', locationObject);
+        return locationObject?.name || '';
+    }
+
+    return '';
+}
 
 
 export const useServiceStopStore = defineStore('service-stops', {

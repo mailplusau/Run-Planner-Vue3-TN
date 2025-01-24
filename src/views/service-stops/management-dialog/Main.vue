@@ -58,9 +58,12 @@ function openServiceStopEditor(serviceId, serviceStop) {
 
     ssStore.current.form.custrecord_1288_service = serviceId;
 
-    if (serviceStop)
+    if (serviceStop) {
         for (let fieldId in ssStore.current.form)
             ssStore.current.form[fieldId] = serviceStop[fieldId];
+
+        ssStore.current.id = serviceStop['internalId'.toLowerCase()];
+    } else ssStore.current.id = null;
 
     ssStore.current.crudDialogOpen = true;
 }
@@ -89,7 +92,7 @@ watch(dialogOpen, val => {
                         <v-row justify="space-between" align="center" class="text-white font-weight-bold">
                             <v-col cols="auto" class="text-subtitle-1">{{ service['custrecord_service_text'] }}</v-col>
 
-                            <v-col cols="auto" class="mr-10">
+                            <v-col cols="auto" class="mr-3">
                                 <v-btn color="green" size="small"
                                        @click.stop="openServiceStopEditor(service.internalid)" class="mr-3">Add Service Stop</v-btn>
                             </v-col>
@@ -115,7 +118,7 @@ watch(dialogOpen, val => {
                                         <v-btn color="primary" size="small" @click.stop="openServiceStopEditor(null, serviceStop)">
                                             <v-icon size="small" class="mr-2">mdi-pencil</v-icon> Edit stop
                                         </v-btn>
-                                        <v-btn variant="plain" icon="" color="red" class="ml-2">
+                                        <v-btn variant="plain" icon="" color="red" class="ml-2" @click.stop="ssStore.deleteServiceStop(serviceStop)">
                                             <v-icon>mdi-delete</v-icon>
                                         </v-btn>
                                     </v-col>

@@ -1,6 +1,6 @@
 <script setup>
 import { useServiceStopStore } from "@/stores/service-stops";
-import { computed } from "vue";
+import { computed, ref } from "vue";
 import InlineSelect from "@/components/shared/InlineSelect.vue";
 import { useFranchiseeStore } from "@/stores/franchisees";
 import { useGlobalDialog } from "@/stores/global-dialog";
@@ -8,13 +8,21 @@ import { useRunPlanStore } from "@/stores/run-plans";
 import { useAddressStore } from "@/stores/addresses";
 import { _getAddressFieldNameByType } from "@/utils/utils.mjs";
 import { mapPinColorOptions } from "@/utils/defaults.mjs";
+import { useCustomerStore } from "@/stores/customers";
 
 const serviceStopStore = useServiceStopStore();
 const franchiseeStore = useFranchiseeStore();
 const runPlanStore = useRunPlanStore();
 const globalDialog = useGlobalDialog();
 const addressStore = useAddressStore();
+const customerStore = useCustomerStore();
 
+const baseUrl = 'https://' + import.meta.env.VITE_NS_REALM + '.app.netsuite.com';
+const combinedStops = ref([]);
+const combinedStopsDialog = computed({
+    get: () => !!combinedStops.value.length,
+    set: val => { if (!val) combinedStops.value.splice(0); }
+})
 const selectedFranchisee = computed({
     get: () => franchiseeStore.current.id,
     set: async (val) => {
@@ -83,8 +91,17 @@ function getAddressObject(serviceStop) {
     return addressStore.findCache(serviceStop['custrecord_1288_address_type'], addressId, serviceStop['custrecord_1288_customer']);
 }
 
-function handleStopClicked() {
+function handleStopClicked(serviceStop) {
+    combinedStops.value.splice(0);
+    if (Array.isArray(serviceStop)) combinedStops.value = [...serviceStop];
+    else serviceStopStore.current.customerId = serviceStop['custrecord_1288_customer'];
+}
 
+function getCustomerName(id) {
+    let index = customerStore.ofCurrentFranchisee.findIndex(item => parseInt(id) === parseInt(item['internalid']));
+    if (index < 0) return 'Unknown';
+    let customer = customerStore.ofCurrentFranchisee[index];
+    return `${customer['entityid']} ${customer['companyname']}`;
 }
 </script>
 
@@ -170,6 +187,50 @@ function handleStopClicked() {
                 </v-card>
             </v-col>
         </v-row>
+
+        <v-dialog v-model="combinedStopsDialog" width="450px" scrollable>
+            <v-card class="bg-background">
+                <v-card-title>
+                    <p v-if="combinedStops.length" class="text-center">
+                        Service stop <b class="text-primary">{{combinedStops[0].custrecord_1288_stop_name}}</b>
+                        at <b class="text-primary">{{combinedStops[0].stopTime}}</b> <br>is shared by the following services:
+                    </p>
+                </v-card-title>
+                <v-divider></v-divider>
+                <v-card-text style="max-height: 500px;" class="pa-0">
+                    <v-table class="bg-background">
+                        <thead>
+                        <tr>
+                            <th class="text-center">Services</th>
+                            <th class="text-center">Customers</th>
+                        </tr>
+                        </thead>
+                        <tbody style="max-height: 500px;">
+                        <tr v-for="(stop, index) in combinedStops" :key="index">
+                            <td class="text-center">
+                                <a @click="handleStopClicked(stop)" class="text-decoration-underline text-primary cursor-pointer">
+                                    {{stop.custrecord_1288_service_text}}
+                                </a>
+                            </td>
+                            <td class="text-center">
+                                <a :href="`${baseUrl}/app/common/entity/custjob.nl?id=${stop.custrecord_1288_customer}`" target="_blank" class="text-primary">
+                                    {{ getCustomerName(stop.custrecord_1288_customer) }}
+                                </a>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </v-table>
+                </v-card-text>
+
+                <v-divider></v-divider>
+
+                <v-card-actions>
+                    <v-spacer></v-spacer>
+                    <v-btn color="primary" small outlined dark @click="combinedStopsDialog = false">Close</v-btn>
+                    <v-spacer></v-spacer>
+                </v-card-actions>
+            </v-card>
+        </v-dialog>
     </v-container>
 </template>
 

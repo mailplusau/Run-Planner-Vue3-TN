@@ -6,6 +6,7 @@ import http from "@/utils/http.mjs";
 import { _getAddressFieldNameByType, _parseNCLocation } from "@/utils/utils.mjs";
 import { useFranchiseeStore } from "@/stores/franchisees";
 
+const emit = defineEmits(['addressSelected'])
 const props = defineProps({
     readonly: {
         type: Boolean,
@@ -50,7 +51,7 @@ const displayAddress = computed(() => {
         serviceStopObject.value[_getAddressFieldNameByType(serviceStopObject.value['custrecord_1288_address_type'])],
         serviceStopObject.value['custrecord_1288_customer']);
 
-    return addressObject?.formatted || 'Unknown'
+    return addressObject?.formatted || ''
 });
 const customerAddressOption = computed(() => !customerId.value ? [] : Object.keys(addressStore.cached)
     .filter(key => (new RegExp(`^(2\\.)\\S*(\\.${customerId.value})$`, 'gi')).test(key))
@@ -64,6 +65,11 @@ const selectedLocation = computed(() => {
     const index = locationOptions.value.findIndex(item => item['id'] === selectedLocationId.value);
 
     return index >= 0 ? locationOptions.value[index] : {};
+})
+const nonCustomerLocationTypes = computed(() => {
+    // AusPost (1), Bank (3), Storage Facilities (9), Partner Location (13), Meeting Point (14), Toll Depots (21), Kennards (22), Storage King (23), I.M. (25)
+    let locations = [1, 3, 9, 13, 14, 21, 22, 23, 25];
+    return dataStore.nonCustomerLocationTypes.filter(item => locations.includes(parseInt(item.value)));
 })
 
 async function getLocationOptions() {
@@ -86,6 +92,7 @@ async function getLocationOptions() {
 function useBookAddress() {
     serviceStopObject.value['custrecord_1288_address_type'] = '2';
     serviceStopObject.value['custrecord_1288_address_book'] = selectedBookId.value;
+    emit('addressSelected');
     dialogOpen.value = false;
     resetDialog();
 }
@@ -94,6 +101,7 @@ function useLocation() {
     addressStore.cacheLocations([selectedLocation.value], false);
     serviceStopObject.value['custrecord_1288_address_type'] = '3';
     serviceStopObject.value['custrecord_1288_postal_location'] = selectedLocationId.value;
+    emit('addressSelected');
     dialogOpen.value = false;
     resetDialog();
 }
@@ -174,7 +182,7 @@ watch(dialogOpen, val => {
                         <v-row class="mt-2">
                             <v-col cols="6">
                                 <v-autocomplete label="Type" variant="underlined" density="compact" color="primary"
-                                                v-model="nclType" :items="dataStore.nonCustomerLocationTypes" :disabled="nclLoading"></v-autocomplete>
+                                                v-model="nclType" :items="nonCustomerLocationTypes" :disabled="nclLoading"></v-autocomplete>
                             </v-col>
                             <v-col cols="6">
                                 <v-autocomplete label="State" variant="underlined" density="compact" color="primary"

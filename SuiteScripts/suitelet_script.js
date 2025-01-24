@@ -271,7 +271,7 @@ const getOperations = {
 }
 
 const postOperations = {
-    'saveServiceStop' : function (response, {serviceStopId, serviceStopData}) {
+    'saveOrCreateServiceStop' : function (response, {serviceStopId, serviceStopData}) {
         let {record} = NS_MODULES;
         let serviceStopRecord;
         let isoStringRegex = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z$/;

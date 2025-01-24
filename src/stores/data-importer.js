@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
 import http from '@/utils/http.mjs';
-import { getOperatorsByFilters, serviceStop as serviceStopFields } from "netsuite-shared-modules";
-import { _parseNCLocation } from "@/utils/utils.mjs";
+import { serviceStop as serviceStopFields } from "netsuite-shared-modules";
+import { _parseNCLocation, isServiceStopObjectValid } from "@/utils/utils.mjs";
 import { read, utils } from 'xlsx';
 import { useGlobalDialog } from "@/stores/global-dialog";
 
@@ -88,13 +88,39 @@ const actions = {
 
         this.stopsToBeImported = serviceStopResults;
         this.stopsToBeImported.push({...serviceStopFields});
-        console.log(serviceStopResults);
 
         if (!this.stopsToBeImported.length)
             useGlobalDialog().displayError('Error', 'CSV file did not yield any service stop.');
         else await useGlobalDialog().close(2000, 'Complete!');
+    },
+    async createStopsFromCSV() {
+        let validStops = [];
+        let invalidStops = [];
 
-        console.log(JSON.parse(JSON.stringify(this.locationsById)))
+        for (let stop of this.stopsToBeImported)
+            if (isServiceStopObjectValid(stop)) validStops.push(stop); else invalidStops.push(stop);
+
+        const confirmed = useGlobalDialog().displayConfirmation('Preparing to import Service Stops',
+            `<b class="text-primary">${validStops.length} valid entries</b> will be uploaded to NetSuite.`
+            + (invalidStops.length ? `<span>The remaining <b class="text-red">${invalidStops.length} invalid entries</b> will remain on this page for further correction.<br></span>` : '')
+            + `Do you wish to proceed?`);
+
+        if (!confirmed) return;
+
+        let percent = 0;
+        let warning = `<br><b class="text-red">Do not close or leave this page!</b>`;
+        useGlobalDialog().displayProgress('', `Please wait. Creating service stops... 0% ${warning}`);
+
+        for (let [index, stop] of validStops.entries()) {
+            percent = Math.floor((index + 1) * 10000 / validStops.length) / 100;
+            useGlobalDialog().displayProgress('', `Please wait. Creating service stops... ${percent}% ${warning}`);
+            stop.custrecord_1288_relief_start = new Date('2024-01-01T00:00:00');
+            stop.custrecord_1288_relief_end = new Date('2024-01-01T23:59:59');
+            await http.post('saveOrCreateServiceStop', {serviceStopId: stop.internalid, serviceStopData: stop});
+        }
+
+        useGlobalDialog().displayInfo('Complete', `${validStops.length} service stops have been created.`);
+        this.stopsToBeImported = invalidStops.length ? invalidStops : [{...serviceStopFields}];
     },
 
     async getCustomersByFranchiseeId(franchiseeId) {
