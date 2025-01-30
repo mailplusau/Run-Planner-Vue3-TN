@@ -91,6 +91,10 @@ onMounted(() => {
     width: 100% !important;
 }
 
+.pa-0 .v-expansion-panel-text__wrapper {
+    padding: 0 !important;
+}
+
 // Scrollbar
 *::-webkit-scrollbar {
     background: transparent;

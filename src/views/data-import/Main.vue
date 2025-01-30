@@ -30,7 +30,7 @@ onBeforeUnmount(() => {
 
 const gridApi = shallowRef();
 
-const validStops = computed(() => dataImporter.stopsToBeImported.filter(stop => !isServiceStopObjectValid(stop)))
+const validStops = computed(() => dataImporter.stopsToBeImported.filter(stop => isServiceStopObjectValid(stop)))
 const rowData = computed({
     get() {
         return dataImporter.stopsToBeImported;
@@ -326,7 +326,7 @@ defineExpose({agAddressPicker, agCompletenessCell, agVAutocompleteEditor, agCell
         <Teleport to="div.v-toolbar__extension" v-if="componentReady">
             <div class="d-flex justify-end flex-grow-1">
                 <v-btn variant="elevated" size="small" color="green" class="mr-4" @click="dataImporter.createStopsFromCSV()"
-                       :disabled="!validStops.length">Import Service Stops</v-btn>
+                       :disabled="!validStops.length">Import Service Stops ({{validStops.length}})</v-btn>
                 <v-btn variant="outlined" size="small" color="secondary" class="mr-4" @click="dataImporter.importDialog.open = true">
                     Select File To Import</v-btn>
             </div>

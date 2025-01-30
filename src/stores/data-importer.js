@@ -4,6 +4,9 @@ import { serviceStop as serviceStopFields } from "netsuite-shared-modules";
 import { _parseNCLocation, isServiceStopObjectValid } from "@/utils/utils.mjs";
 import { read, utils } from 'xlsx';
 import { useGlobalDialog } from "@/stores/global-dialog";
+import { useCustomerStore } from "@/stores/customers";
+import { useServiceStore } from "@/stores/services";
+import { useServiceStopStore } from "@/stores/service-stops";
 
 const state = {
     importDialog: {
@@ -61,8 +64,11 @@ const actions = {
 
         this.stopsToBeImported.splice(0);
 
-        let results = await Promise.allSettled(lineDataArray.map(lineData =>
-            http.post('convertCsvLineToServiceStopData', {lineData, useOldTemplate: headers.includes('Stop 1 Location')}, {noErrorPopup: true})));
+        let results = await Promise.allSettled(lineDataArray
+            .filter(lineData => Array.isArray(lineData) && lineData.length)
+            .map(lineData =>
+                http.post('convertCsvLineToServiceStopData',
+                    { lineData, useOldTemplate: headers.includes('Stop 1 Location') }, {noErrorPopup: true})));
 
         this.importDialog.open = false;
         this.importDialog.csvFile = null;
@@ -91,7 +97,7 @@ const actions = {
 
         if (!this.stopsToBeImported.length)
             useGlobalDialog().displayError('Error', 'CSV file did not yield any service stop.');
-        else await useGlobalDialog().close(2000, 'Complete!');
+        else await useGlobalDialog().close(1000, 'Complete!');
     },
     async createStopsFromCSV() {
         let validStops = [];
@@ -100,9 +106,9 @@ const actions = {
         for (let stop of this.stopsToBeImported)
             if (isServiceStopObjectValid(stop)) validStops.push(stop); else invalidStops.push(stop);
 
-        const confirmed = useGlobalDialog().displayConfirmation('Preparing to import Service Stops',
+        const confirmed = await useGlobalDialog().displayConfirmation('Preparing to import Service Stops',
             `<b class="text-primary">${validStops.length} valid entries</b> will be uploaded to NetSuite.`
-            + (invalidStops.length ? `<span>The remaining <b class="text-red">${invalidStops.length} invalid entries</b> will remain on this page for further correction.<br></span>` : '')
+            + (invalidStops.length ? `<span>The remaining <b class="text-red">${invalidStops.length} invalid entries</b> will remain on this page for correction.<br><br></span>` : '')
             + `Do you wish to proceed?`);
 
         if (!confirmed) return;
@@ -118,6 +124,13 @@ const actions = {
             stop.custrecord_1288_relief_end = new Date('2024-01-01T23:59:59');
             await http.post('saveOrCreateServiceStop', {serviceStopId: stop.internalid, serviceStopData: stop});
         }
+
+        useGlobalDialog().displayProgress('', `Please wait. Processing data...`);
+        await Promise.allSettled([
+            useCustomerStore().getCustomersOfCurrentFranchisee(),
+            useServiceStore().getServicesOfCurrentFranchisee(),
+            useServiceStopStore().getServiceStopsOfCurrentFranchisee(),
+        ])
 
         useGlobalDialog().displayInfo('Complete', `${validStops.length} service stops have been created.`);
         this.stopsToBeImported = invalidStops.length ? invalidStops : [{...serviceStopFields}];

@@ -120,10 +120,10 @@ function getCustomerName(id) {
 
                         <InlineSelect :items="franchiseeStore.all" v-model="selectedFranchisee" item-value="internalid" item-title="companyname">
                             <template v-slot:activator="{ activatorProps, selectedTitle }">
-                                <span v-bind="franchiseeStore.busy ? null : activatorProps" class="mx-3 text-subtitle-2 text-secondary cursor-pointer">
+                                <span v-bind="franchiseeStore.busy ? null : activatorProps" class="mx-3 text-subtitle-2 cursor-pointer">
                                     Franchisee:
                                     <v-progress-circular v-if="franchiseeStore.busy" indeterminate size="20" width="2" class="ml-2"></v-progress-circular>
-                                    <b v-else-if="franchiseeStore.current.id"><i><u>{{ selectedTitle }}</u></i></b>
+                                    <b v-else-if="franchiseeStore.current.id"><i><u class="text-secondary">{{ selectedTitle }}</u></i></b>
                                     <b v-else><i><u class="text-red">[Non Selected]</u></i></b>
                                 </span>
                             </template>
@@ -131,17 +131,20 @@ function getCustomerName(id) {
 
                         <InlineSelect :items="runPlans" v-model="selectedRunPlan" item-value="internalid" item-title="name" no-data-text="No run plan found">
                             <template v-slot:activator="{ activatorProps, selectedTitle }">
-                                <span v-bind="franchiseeStore.busy ? null : activatorProps" class="mx-3 text-subtitle-2 text-secondary cursor-pointer">
+                                <span v-bind="franchiseeStore.busy ? null : activatorProps" class="ml-3 text-subtitle-2 cursor-pointer">
                                     Run Plan:
                                     <v-progress-circular v-if="franchiseeStore.busy" indeterminate size="20" width="2" class="ml-2"></v-progress-circular>
                                     <b v-else-if="parseInt(runPlanStore.current.id) === -1"><i><u>All Run Plans</u></i></b>
-                                    <b v-else-if="runPlanStore.current.id"><i><u>{{ selectedTitle || 'Unknown' }}</u></i></b>
+                                    <b v-else-if="runPlanStore.current.id"><i><u class="text-secondary">{{ selectedTitle || 'Unknown' }}</u></i></b>
                                     <b v-else><i><u class="text-red">[Non Selected]</u></i></b>
                                 </span>
                             </template>
                         </InlineSelect>
 
-                        <span class="mr-3"></span>
+                        <v-icon size="15" class="ml-1" @click="runPlanStore.crudDialog.open = true">mdi-pencil</v-icon>
+
+                        <v-btn size="small" color="green" variant="elevated" class="mx-3" :disabled="!serviceStopStore.ofCurrentFranchisee.length"
+                               @click="serviceStopStore.exportServiceStopsToSpreadsheet()">Export Service Stops</v-btn>
                     </v-toolbar>
 
                     <v-virtual-scroll :height="virtualScrollItems.length <= 1 ? 'unset' : 'calc(100vh - 140px)'" :items="virtualScrollItems">

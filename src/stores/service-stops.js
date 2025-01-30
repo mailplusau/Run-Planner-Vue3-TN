@@ -5,9 +5,10 @@ import { useFranchiseeStore } from "@/stores/franchisees";
 import http from "@/utils/http.mjs";
 import { serviceStop as serviceStopFields } from "netsuite-shared-modules";
 import { useAddressStore } from "@/stores/addresses";
-import { _getAddressFieldNameByType } from "@/utils/utils.mjs";
+import { _getAddressFieldNameByType, simpleCompare } from "@/utils/utils.mjs";
 import { useGlobalDialog } from "@/stores/global-dialog";
 import { useCustomerStore } from "@/stores/customers";
+import { writeFile, utils } from 'xlsx';
 
 const state = {
     ofCurrentFranchisee: [],
@@ -141,6 +142,87 @@ const actions = {
             serviceStopId: this.current.id,
             serviceStopData
         });
+    },
+    async exportServiceStopsToSpreadsheet() {
+        const franchiseeName = useFranchiseeStore().current.details.companyname;
+        const msg = `Would you like to export all service stops of franchisee <u><b class="text-primary">${franchiseeName}</b></u> to a spreadsheet file?`;
+
+        const confirmed = await new Promise((resolve) => {
+            useGlobalDialog().displayInfo('', msg, false, [
+                'spacer',
+                {color: 'unset', variant: 'elevated', text: 'Cancel', action:() => { resolve(0); useGlobalDialog().close(); }, class: 'text-none'},
+                {color: 'green', variant: 'elevated', text: 'Export All', action:() => { resolve(1); }, class: 'text-none'},
+                'spacer',
+            ], false, 465)
+        });
+
+        if (!confirmed) return;
+
+        useGlobalDialog().displayProgress('', 'Exporting service stops. Please wait...');
+        await this.getServiceStopsOfCurrentFranchisee();
+
+        const serviceStops = JSON.parse(JSON.stringify(this.ofCurrentFranchisee));
+
+        serviceStops.sort((a, b) =>
+            simpleCompare(a.custrecord_1288_customer, b.custrecord_1288_customer) ||
+            simpleCompare(a.custrecord_1288_service, b.custrecord_1288_service) ||
+            simpleCompare(a.custrecord_1288_stop_times, b.custrecord_1288_stop_times)
+        );
+
+        const excelRows = [];
+
+        for (let serviceStop of serviceStops) {
+            let addressObject = useAddressStore().findCacheByStopObj(serviceStop);
+
+            let terms = [
+                {key: 'mon', value: 'Monday'},
+                {key: 'tue', value: 'Tuesday'},
+                {key: 'wed', value: 'Wednesday'},
+                {key: 'thu', value: 'Thursday'},
+                {key: 'fri', value: 'Friday'},
+                {key: 'adhoc', value: 'Adhoc'},
+            ]
+            let stopTimes = {}
+            let stopTimeArray = serviceStop.custrecord_1288_stop_times.split(',');
+            for (let [index, freq] of serviceStop.custrecord_1288_frequency.split(',').entries())
+                stopTimes[terms[index].value.toLowerCase()] = parseInt(freq) === 1 ? stopTimeArray[index].split('|')[0] : ''
+
+            let addressTypes = ['Undocumented', 'Customer\'s Address', 'Known Address'];
+
+            excelRows.push({
+                franchisee: serviceStop.custrecord_1288_franchisee_text,
+                customerInternalId: serviceStop.custrecord_1288_customer,
+                customerEntityId: serviceStop.custrecord_1288_customer_text.substring(0, serviceStop.custrecord_1288_customer_text.indexOf(' ') + 1),
+                customerName: serviceStop.custrecord_1288_customer_text.substring(serviceStop.custrecord_1288_customer_text.indexOf(' ') + 1),
+                serviceID: serviceStop.custrecord_1288_service,
+                serviceName: serviceStop.custrecord_1288_service_text,
+                addressType: addressTypes[parseInt(serviceStop.custrecord_1288_address_type) - 1],
+                address: addressObject.formatted,
+
+                ...stopTimes,
+
+                notes: serviceStop.custrecord_1288_notes,
+                driverId: serviceStop.custrecord_1288_operator,
+                driverName: serviceStop.custrecord_1288_operator_text,
+                planId: serviceStop.custrecord_1288_plan,
+                planName: serviceStop.custrecord_1288_plan_text,
+                serviceStopId: serviceStop.internalid,
+            });
+        }
+
+        const headers = ['Franchisee', 'Customer Internal ID', 'Customer Entity ID', 'Customer Name', 'Service ID', 'Service Name', 'Address Type', 'Address',
+            'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Adhoc',' Notes', 'Driver ID', 'Driver Name', 'Plan ID', 'Plan Name', 'Service Stop ID'];
+
+        const workbook = utils.book_new();
+        const worksheet = utils.json_to_sheet(excelRows);
+
+        utils.sheet_add_aoa(worksheet, [headers], { origin: "A1" });
+        utils.sheet_add_json(worksheet, excelRows, { origin: 'A2', skipHeader: true });
+        utils.book_append_sheet(workbook, worksheet, "Report");
+
+        writeFile(workbook, `${franchiseeName.toLowerCase()} (${(new Date()).getTime()}).xlsx`, { compression: true });
+
+        await useGlobalDialog().close(2500, 'Export Complete. File will be downloaded shortly.')
     },
     async saveOrCreateServiceStop(serviceStopId, serviceStopData) {
         await http.post('saveOrCreateServiceStop', {serviceStopId, serviceStopData});

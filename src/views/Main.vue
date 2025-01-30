@@ -5,6 +5,7 @@ import ServiceMapView from '@/views/service-map/Main.vue';
 import DataImportView from '@/views/data-import/Main.vue';
 import ServiceStopManagementDialog from '@/views/service-stops/management-dialog/Main.vue';
 import ServiceStopCrudDialog from '@/views/service-stops/crud-dialog/Main.vue';
+import RunPlanManagementDialog from '@/views/run-plans/management-dialog/Main.vue';
 
 import { useMainStore } from "@/stores/main";
 
@@ -26,6 +27,7 @@ const components = {
 
     <ServiceStopManagementDialog />
     <ServiceStopCrudDialog />
+    <RunPlanManagementDialog />
 </template>
 
 <style scoped>

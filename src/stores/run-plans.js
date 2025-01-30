@@ -11,6 +11,16 @@ const state = {
         id: null,
         details: {...runPlanFields},
         texts: {...runPlanFields},
+    },
+
+    crudDialog: {
+        open: false,
+        form: {
+            id: null,
+            name: '',
+            custrecord_run_franchisee: '',
+            custrecord_run_operator: '',
+        }
     }
 };
 
@@ -37,6 +47,10 @@ const actions = {
             }
 
         this.busy = false;
+    },
+    async saveRunPlan(runPlanId, runPlanData) {
+        await http.post('saveRunPlan', { runPlanId, runPlanData })
+        await _getAllActiveRunPlans(this);
     }
 };
 

@@ -33,10 +33,10 @@ const actions = {
         if (!top.location.href.includes('app.netsuite')) return;
 
     },
-    async cacheAnAddress(addressType, addressId, customerId) {
+    async cacheAnAddress(addressType, addressId, customerId, forced = false) {
         const cacheId = `${addressType}.${addressId}${parseInt(addressType) === 2 ? '.' + customerId : ''}`;
 
-        if (!this.cached[cacheId]) {
+        if (!this.cached[cacheId] || forced) {
             this.cached[cacheId] = {formatted: 'Retrieving...', name: '', addr1: '', addr2: '', city: '', state: '', zip: '', lat: '', lng: ''};
 
             if (parseInt(addressType) === 1) {
