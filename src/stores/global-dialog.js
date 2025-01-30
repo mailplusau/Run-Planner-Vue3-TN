@@ -30,6 +30,7 @@ const actions = {
             elapsedTime = 0;
             this.progress = 100;
             this.body = completeMessage || this.body;
+            this.hideButtons = true;
 
             await waitMilliseconds(waitBeforeClose);
         }
@@ -73,6 +74,7 @@ const actions = {
         this.progress = -1;
         this.persistent = true;
         this.isError = false;
+        this.buttons = [];
         this.hideButtons = true;
     },
     displayInfo(title, message, persistent = false, buttons = [], hideButtons = false, maxWith = 500) {
