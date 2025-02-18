@@ -15,6 +15,7 @@ const state = {
 
     current: {
         customerId: null,
+        serviceIds: [],
 
         id: null,
         crudDialogOpen: false,

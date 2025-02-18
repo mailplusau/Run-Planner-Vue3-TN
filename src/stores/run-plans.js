@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import http from "@/utils/http.mjs";
 import { runPlan as runPlanFields } from "../../../netsuite-shared-modules/index.mjs";
 import { useFranchiseeStore } from "@/stores/franchisees";
+import { useServiceMap } from "@/stores/service-map";
 
 const state = {
     all: [],
@@ -43,8 +44,10 @@ const actions = {
         if (index >= 0)
             for (let fieldId in runPlanFields) {
                 this.current.details[fieldId] = this.all[index][fieldId];
-                this.current.texts[fieldId] = this.all[index][fieldId + '_text'];
+                this.current.texts[fieldId] = this.all[index][fieldId + "_text"];
             }
+
+        await useServiceMap().getRoutesAndMarkersOfSelectedRunPlan();
 
         this.busy = false;
     },

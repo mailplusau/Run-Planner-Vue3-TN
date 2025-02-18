@@ -94,7 +94,10 @@ function getAddressObject(serviceStop) {
 function handleStopClicked(serviceStop) {
     combinedStops.value.splice(0);
     if (Array.isArray(serviceStop)) combinedStops.value = [...serviceStop];
-    else serviceStopStore.current.customerId = serviceStop['custrecord_1288_customer'];
+    else {
+        serviceStopStore.current.serviceIds = [serviceStop['custrecord_1288_service']];
+        serviceStopStore.current.customerId = serviceStop["custrecord_1288_customer"];
+    }
 }
 
 function getCustomerName(id) {

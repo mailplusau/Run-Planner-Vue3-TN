@@ -21,7 +21,7 @@ const components = {
 
 <template>
     <v-fade-transition v-for="(_, tabKey) in mainStore.mainTabOptions" :key="tabKey" leave-absolute hide-on-leave mode="out-in">
-        <component v-if="mainStore.mainTab === mainStore.mainTabOptions[tabKey].value"
+        <component v-show="mainStore.mainTab === mainStore.mainTabOptions[tabKey].value"
                    :is="components[mainStore.mainTabOptions[tabKey].component]"></component>
     </v-fade-transition>
 

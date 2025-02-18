@@ -74,7 +74,7 @@ watch(dialogOpen, val => {
 </script>
 
 <template>
-    <v-dialog v-model="dialogOpen" fullscreen persistent transition="dialog-bottom-transition">
+    <v-dialog v-model="dialogOpen" fullscreen transition="dialog-bottom-transition">
         <v-card color="background">
             <v-toolbar color="primary" class="mb-4">
                 <span class="ml-4 text-subtitle-1 text-secondary">
@@ -86,7 +86,7 @@ watch(dialogOpen, val => {
                 <v-btn color="red" @click="dialogOpen = false" variant="elevated" class="mr-3" size="small"><v-icon>mdi-close</v-icon> close</v-btn>
             </v-toolbar>
 
-            <v-expansion-panels multiple :model-value="servicesOfCustomer.map(item => item['internalid'])" variant="accordion" elevation="5" class="px-4 mb-5">
+            <v-expansion-panels multiple v-model="ssStore.current.serviceIds" variant="accordion" elevation="5" class="px-4 mb-5">
                 <v-expansion-panel v-for="service in servicesOfCustomer" :value="service['internalid']">
                     <v-expansion-panel-title color="primary">
                         <v-row justify="space-between" align="center" class="text-white font-weight-bold">

@@ -83,6 +83,7 @@ async function handleCustomerTableClicked(event, item) {
 }
 
 async function handleServiceTableClicked(event, item) {
+    serviceStopStore.current.serviceIds = [item.item['internalid']]
     serviceStopStore.current.customerId = item.item['custrecord_service_customer'];
 }
 </script>

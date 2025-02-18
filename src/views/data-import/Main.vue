@@ -1,6 +1,6 @@
 <script setup>
 import { AgGridVue } from "ag-grid-vue3";
-import { computed, nextTick, onBeforeUnmount, onMounted, ref, shallowRef } from "vue";
+import { computed, nextTick, ref, shallowRef, watch } from "vue";
 import { useMainStore } from "@/stores/main";
 import { _getAddressFieldNameByType, isServiceStopObjectValid } from "@/utils/utils.mjs";
 import { useDataImporter } from "@/stores/data-importer";
@@ -15,18 +15,6 @@ const mainStore = useMainStore();
 const dataImporter = useDataImporter();
 const franchiseeStore = useFranchiseeStore();
 const componentReady = ref(false);
-
-onMounted(async () => {
-    await nextTick();
-    mainStore.appBarExtended = true;
-    await nextTick();
-    componentReady.value = true;
-})
-
-onBeforeUnmount(() => {
-    componentReady.value = false;
-    mainStore.appBarExtended = false;
-})
 
 const gridApi = shallowRef();
 
@@ -303,6 +291,19 @@ function resetAddressAndStopName(singleRowData) {
 function handleCellMouseDown(e) {
     // contextMenu.value.handleCellMouseDown(e);
 }
+
+watch(() => mainStore.mainTab, async val => {
+    if (val === mainStore.mainTabOptions.IMPORT.value) {
+        await nextTick();
+        mainStore.appBarExtended = true;
+        await nextTick();
+        componentReady.value = true;
+    } else {
+        componentReady.value = false;
+        await nextTick();
+        mainStore.appBarExtended = false;
+    }
+})
 
 defineExpose({agAddressPicker, agCompletenessCell, agVAutocompleteEditor, agCellRemoval})
 </script>

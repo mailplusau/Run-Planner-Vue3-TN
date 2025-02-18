@@ -31,6 +31,7 @@ const actions = {
         const index = this.all.findIndex(item => item.internalid === id);
         if (index < 0) return;
 
+        const franchiseeIdChanged = this.current.id !== id;
         this.current.id = id;
 
         for (let fieldId in franchiseeFields) {
@@ -39,12 +40,12 @@ const actions = {
         }
 
         await Promise.allSettled([
-            useRunPlanStore().changeCurrentRunPlanId(null),
+            franchiseeIdChanged ? useRunPlanStore().changeCurrentRunPlanId(null) : null,
             useCustomerStore().getCustomersOfCurrentFranchisee(),
             useServiceStore().getServicesOfCurrentFranchisee(),
             useServiceStopStore().getServiceStopsOfCurrentFranchisee(),
         ])
-    }
+    },
 };
 
 async function _getAllActiveFranchisees(ctx) {

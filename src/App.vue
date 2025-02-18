@@ -4,8 +4,10 @@ import { useMainStore } from "@/stores/main";
 import GlobalDialog from "@/components/shared/GlobalDialog.vue";
 import MainView from "@/views/Main.vue";
 import NavigationTabs from "@/views/shared/NavigationTabs.vue";
+import { useUserStore } from "@/stores/user";
 
 const mainStore = useMainStore();
+const userStore = useUserStore();
 const leftDrawer = ref(false);
 
 onMounted(() => {
@@ -17,7 +19,7 @@ onMounted(() => {
 <template>
     <v-app class="bg-background">
         <v-app-bar color="primary" density="compact">
-            <v-btn icon="mdi-menu" variant="plain" @click="leftDrawer = !leftDrawer"></v-btn>
+            <v-btn icon="mdi-menu" variant="plain" @click="leftDrawer = !leftDrawer" v-if="userStore.isMe"></v-btn>
             <span class="mr-4">Run Planner</span>
 
             <v-divider vertical></v-divider>
@@ -25,12 +27,12 @@ onMounted(() => {
             <NavigationTabs />
 
             <v-spacer></v-spacer>
-<!--            <v-btn icon="mdi-menu" variant="plain" @click="mainStore.rightDrawerOpen = !mainStore.rightDrawerOpen"></v-btn>-->
+            <v-btn icon="mdi-menu" variant="plain" @click="mainStore.rightDrawerOpen = !mainStore.rightDrawerOpen" v-if="false"></v-btn>
 
             <template v-slot:extension v-if="mainStore.appBarExtended"></template>
         </v-app-bar>
 
-        <v-navigation-drawer v-model="leftDrawer" scrim>
+        <v-navigation-drawer v-model="leftDrawer" scrim temporary color="background">
             <v-list>
                 <v-list-item title="Drawer left"></v-list-item>
             </v-list>

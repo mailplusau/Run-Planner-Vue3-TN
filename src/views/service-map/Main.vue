@@ -1,5 +1,5 @@
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, ref } from "vue";
+import { computed, nextTick, onMounted, ref, watch } from "vue";
 import { useServiceMap } from "@/stores/service-map";
 import { useMainStore } from "@/stores/main";
 import { useFranchiseeStore } from "@/stores/franchisees";
@@ -15,22 +15,8 @@ const globalDialog = useGlobalDialog();
 const componentReady = ref(false);
 
 onMounted(async () => {
-    globalDialog.displayProgress('', 'Preparing Service Map. Please wait...')
     await serviceMap.init();
-    await serviceMap.getRoutesAndMarkersOfSelectedRunPlan();
     await serviceMap.getTerritoryMap();
-    await nextTick();
-    // mainStore.appBarExtended = true;
-    mainStore.rightDrawerOpen = true;
-    await nextTick();
-    componentReady.value = true;
-    globalDialog.close(200, 'Complete!').then();
-})
-
-onBeforeUnmount(() => {
-    componentReady.value = false;
-    // mainStore.appBarExtended = false;
-    mainStore.rightDrawerOpen = false;
 })
 
 const selectedFranchisee = computed({
@@ -47,7 +33,6 @@ const selectedRunPlan = computed({
     set: async (val) => {
         globalDialog.displayProgress('', 'Retrieving Service Stop Information...');
         await runPlanStore.changeCurrentRunPlanId(val);
-        await serviceMap.getRoutesAndMarkersOfSelectedRunPlan();
         globalDialog.close(100, 'Complete!').then();
     }
 });
@@ -59,6 +44,19 @@ const runPlans = computed(() => {
 
     return associatedRunPlans.length > 1 ?
         [{internalid: '-1', name: 'All Run Plans'}, ...associatedRunPlans] : associatedRunPlans
+})
+
+watch(() => mainStore.mainTab, async val => {
+    if (val === mainStore.mainTabOptions.MAP.value) {
+        await nextTick();
+        mainStore.rightDrawerOpen = true;
+        await nextTick();
+        componentReady.value = true;
+    } else {
+        componentReady.value = false;
+        await nextTick();
+        mainStore.rightDrawerOpen = false;
+    }
 })
 </script>
 
